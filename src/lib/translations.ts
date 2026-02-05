@@ -22,7 +22,9 @@ export const translations = {
         analyzing: "Gemini 3 正在進行多模態推理...",
         upload: "上傳影像",
         placeholder: "輸入現場指令...",
-        userPrompt: "分析此區域災情，並分派任務。"
+        userPrompt: "分析此區域災情，並分派任務。",
+        clearHistory: "清除對話紀錄",
+        historyCleared: "紀錄已清除"
     },
     map: {
         offline: "離線地圖模式"
@@ -60,7 +62,9 @@ export const translations = {
         analyzing: "Gemini 3 Multimodal Reasoning...",
         upload: "Upload Image",
         placeholder: "Enter command...",
-        userPrompt: "Analyze this area and assign tasks."
+        userPrompt: "Analyze this area and assign tasks.",
+        clearHistory: "Clear History",
+        historyCleared: "History Cleared"
     },
     map: {
         offline: "OFFLINE MAP"
