@@ -10,6 +10,7 @@ import { DEMO_SCENARIO } from '@/data/mockScenarios';
 import { Activity, Signal, Battery, Users } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
 import LanguageToggle from '@/components/LanguageToggle';
+import UserProfile from '@/components/UserProfile';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -41,6 +42,12 @@ export default function Home() {
       };
       setMessages(prev => [...prev, aiMsg]);
     }, 3000);
+  };
+
+  // 登出函式
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    // 如果想要登出後清空對話紀錄，也可以在這裡 setMessages([])
   };
 
   return (
@@ -76,6 +83,11 @@ export default function Home() {
               <div className="flex items-center gap-2"><Activity size={14}/> CPU: Gemini-Pro-Vision</div>
               <div className="flex items-center gap-2"><Battery size={14}/> POWER: 98%</div>
            </div>
+
+           {/* User Profile icon */}
+           <UserProfile onLogout={handleLogout} />
+
+           {/* 語言切換按鈕 */}
            <LanguageToggle /> 
         </div>
       </div>

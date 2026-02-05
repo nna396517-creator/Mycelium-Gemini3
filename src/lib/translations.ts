@@ -4,7 +4,6 @@ export type Language = 'zh' | 'en';
 
 export const translations = {
   zh: {
-    // ... (header, stats, chat, map 維持不變，請保留原本的內容)
     header: {
         title: "Mycelium 菌絲體網絡",
         subtitle: "Gemini 3 分散式韌性系統 | 連線穩定",
@@ -28,7 +27,6 @@ export const translations = {
     map: {
         offline: "離線地圖模式"
     },
-    // [更新] Auth 區塊：新增 error 訊息
     auth: {
       title: "身份驗證",
       subtitle: "請連接 Mycelium 安全節點以存取指揮權限",
@@ -37,10 +35,13 @@ export const translations = {
       success: "授權通過",
       idPlaceholder: "輸入指揮官 ID (提示: admin)",
       error: "拒絕存取：無效的憑證"
+    },
+    user: {
+      role: "指揮官",
+      logout: "登出系統"
     }
   },
   en: {
-    // ... (Original header, stats, chat, map)
     header: {
         title: "Mycelium Network",
         subtitle: "Gemini 3 Distributed Resilience | Stable",
@@ -64,7 +65,6 @@ export const translations = {
     map: {
         offline: "OFFLINE MAP"
     },
-    // [Update] Auth section
     auth: {
       title: "IDENTITY VERIFICATION",
       subtitle: "Connect to Mycelium Secure Node for Command Access",
@@ -73,6 +73,10 @@ export const translations = {
       success: "ACCESS GRANTED",
       idPlaceholder: "Enter Commander ID (Hint: admin)",
       error: "ACCESS DENIED: INVALID CREDENTIALS"
+    },
+    user: {
+      role: "COMMANDER",
+      logout: "LOGOUT SYSTEM"
     }
   }
 };
