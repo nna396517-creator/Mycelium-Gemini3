@@ -6,15 +6,14 @@ import MapCanvas from '@/components/MapCanvas';
 import CommandPanel from '@/components/CommandPanel';
 import { AnalysisResult, Message } from '@/lib/types';
 import { DEMO_SCENARIO } from '@/data/mockScenarios';
+import { Activity, Signal, Battery, Users, Droplets, BriefcaseMedical } from 'lucide-react';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentScenario, setCurrentScenario] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // 核心功能：處理圖片上傳
   const handleUpload = async (file: File) => {
-    // 1. 馬上把用戶傳的照片秀在對話框
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -24,15 +23,13 @@ export default function Home() {
     setMessages(prev => [...prev, userMsg]);
     setIsAnalyzing(true);
 
-    // 2. 模擬 Gemini 思考 (3秒後回傳結果)
     setTimeout(() => {
       setIsAnalyzing(false);
-      setCurrentScenario(DEMO_SCENARIO); // 觸發地圖紅點
-      
+      setCurrentScenario(DEMO_SCENARIO);
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: DEMO_SCENARIO.situationSummary, // 來自 mockScenarios 的分析文字
+        content: DEMO_SCENARIO.situationSummary,
         analysis: DEMO_SCENARIO
       };
       setMessages(prev => [...prev, aiMsg]);
@@ -40,35 +37,87 @@ export default function Home() {
   };
 
   return (
-    <main className="relative w-full h-screen overflow-hidden bg-zinc-950">
+    <main className="relative w-full h-screen overflow-hidden bg-zinc-950 text-white font-mono selection:bg-blue-500/30">
       
-      {/* 1. 底層：全螢幕地圖 */}
+      {/* 1. 底層：地圖 (請務必換上我上一則回應給你的 MapCanvas 代碼，把浮水印去掉) */}
       <div className="absolute inset-0 z-0">
         <MapCanvas scenario={currentScenario} />
       </div>
 
-      {/* 2. 浮動介面：左側控制台 */}
-      <div className="absolute left-4 top-4 bottom-4 w-[400px] z-10 flex flex-col gap-4">
-        {/* Header 卡片 */}
-        <div className="p-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-            Mycelium 菌絲體網絡
-          </h1>
-          <p className="text-xs text-zinc-400 font-mono mt-1">
-            Gemini 3 分散式韌性系統 | 連線穩定
-          </p>
+      {/* 2. 視覺特效層：掃描線與暗角 */}
+      <div className="absolute inset-0 z-0 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+      <div className="absolute inset-0 z-0 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.9)]"></div>
+      
+      {/* 3. 頂部狀態列 (HUD Top Bar) */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-2 flex justify-between items-center bg-black/60 backdrop-blur border-b border-white/10">
+        <div className="flex items-center gap-4 px-4">
+            <span className="text-blue-400 font-bold tracking-widest text-lg">MYCELIUM v3.0</span>
+            <span className="px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs border border-green-500/30 flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/> SYSTEM ONLINE
+            </span>
         </div>
-
-        {/* 聊天與指令區 */}
-        <div className="flex-1 overflow-hidden rounded-xl border border-white/10 shadow-2xl">
-          <CommandPanel 
-            messages={messages} 
-            isAnalyzing={isAnalyzing} 
-            onUpload={handleUpload} 
-          />
+        <div className="flex items-center gap-6 px-4 text-xs text-zinc-400">
+            <div className="flex items-center gap-2"><Signal size={14}/> LATENCY: 12ms</div>
+            <div className="flex items-center gap-2"><Activity size={14}/> CPU: Gemini-Pro-Vision</div>
+            <div className="flex items-center gap-2"><Battery size={14}/> POWER: 98%</div>
         </div>
       </div>
 
+      {/* 4. 左側：指揮面板 */}
+      <div className="absolute left-4 top-16 bottom-4 w-[400px] z-10 flex flex-col gap-2">
+        <div className="flex-1 overflow-hidden rounded-xl border border-white/10 shadow-2xl bg-black/80 backdrop-blur-md">
+          <CommandPanel messages={messages} isAnalyzing={isAnalyzing} onUpload={handleUpload} />
+        </div>
+      </div>
+
+      {/* 5. 右側：資源監控 (HUD Right Panel) - 這裡我們用假資料裝飾，看起來很專業 */}
+      <div className="absolute right-4 top-16 w-[300px] z-10 flex flex-col gap-4">
+        {/* 區域風險指數 */}
+        <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10">
+            <h3 className="text-zinc-400 text-xs mb-3 flex items-center gap-2">
+                <Activity size={14} className="text-red-500"/> 區域風險指數 (LOCAL RISK)
+            </h3>
+            <div className="flex items-end gap-1 h-24 mb-2">
+                {[40, 65, 30, 80, 50, 90, 45, 70, 60, 85].map((h, i) => (
+                    <div key={i} className="flex-1 bg-red-500/20 hover:bg-red-500/50 transition-all rounded-t-sm relative group">
+                        <div style={{height: `${h}%`}} className="absolute bottom-0 w-full bg-red-500/50 group-hover:bg-red-400"></div>
+                    </div>
+                ))}
+            </div>
+            <div className="flex justify-between text-2xl font-bold text-red-500">
+                <span>CRITICAL</span>
+                <span>89%</span>
+            </div>
+        </div>
+
+        {/* 可用資源 (假資料) */}
+        <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 space-y-4">
+            <h3 className="text-zinc-400 text-xs flex items-center gap-2">
+                <Users size={14} className="text-blue-500"/> 分散式資源節點 (AVAILABLE)
+            </h3>
+            
+            <div className="space-y-1">
+                <div className="flex justify-between text-xs mb-1"><span>醫療救援組 (Medic)</span> <span className="text-blue-400">3/5</span></div>
+                <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 w-[60%]"></div>
+                </div>
+            </div>
+
+            <div className="space-y-1">
+                <div className="flex justify-between text-xs mb-1"><span>物資補給 (Supply)</span> <span className="text-yellow-400">8/10</span></div>
+                <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-yellow-500 w-[80%]"></div>
+                </div>
+            </div>
+
+            <div className="space-y-1">
+                <div className="flex justify-between text-xs mb-1"><span>重型機具 (Heavy)</span> <span className="text-red-400">1/1</span></div>
+                <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-500 w-[100%] animate-pulse"></div>
+                </div>
+            </div>
+        </div>
+      </div>
     </main>
   );
 }

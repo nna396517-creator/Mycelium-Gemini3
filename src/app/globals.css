@@ -46,6 +46,17 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+@theme {
+  --animate-scan: scan 3s linear infinite;
+  
+  @keyframes scan {
+    0% { top: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
