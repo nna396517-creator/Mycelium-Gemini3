@@ -3,39 +3,61 @@ A decentralized disaster resilience network powered by Gemini 3
 
 ---
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## 🌟 Key Features
 
-## Getting Started
+### 1. 🧠 Multimodal AI Analysis (Gemini 3)
+Instead of simple text reports, Mycelium analyzes **raw imagery** from the disaster scene.
+* **Visual Reasoning**: Identifies structural damage, fire hazards, and trapped survivors from uploaded photos.
+* **Task Distribution**: Automatically generates prioritized missions (Medic, Rescue, Supply) based on risk levels.
 
-First, run the development server:
+### 2. 🛡️ Resilient Offline Mapping
+Designed for connectivity-loss scenarios.
+* **Google Maps Integration**: Full interactive map when online.
+* **Fallback Grid System**: Automatically switches to a **"Dev Mock Mode"** (Offline Grid) when map services are unreachable or API quotas are exceeded, ensuring the command center never goes blind.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 3. 🖥️ Tactical HUD Interface
+A "Situation Room" grade dashboard designed for high-stress environments.
+* **Real-time Monitoring**: Visualizes local risk indices, available resources, and system latency.
+* **Dark Mode Optimization**: Reduces eye strain for operators working in low-light environments.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. 🌍 Global Readiness (i18n)
+* **Bilingual Support**: Instant toggle between **English** and **Traditional Chinese**.
+* Built for international cooperation in global disaster relief scenarios.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 5. 🔐 Secure Node Access
+* **Simulated Biometric Auth**: A specialized login overlay simulating secure terminal access.
+* **Role-Based Access**: Commander verification flow (Demo Credential: `admin`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛠️ Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+* **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+* **Language**: TypeScript
+* **Styling**: Tailwind CSS v4 + Shadcn/ui
+* **AI Model**: Google Gemini 3 (Pro Vision / Flash)
+* **Maps**: Google Maps Platform + React Google Maps
+* **Deployment**: Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🎮 Demo Instructions (Mock Mode)
 
-## Deploy on Vercel
+Even without API keys, you can explore the UI flow:
+1.  **Login**: Enter `admin` in the ID field and click **Connect**.
+2.  **Toggle Language**: Use the switch in the top-right corner.
+3.  **Simulate Analysis**:
+    * Click the **Upload (Clip)** icon in the chat bar.
+    * Select any image.
+    * Watch the **Gemini 3 Reasoning** animation.
+    * Observe the **Tactical Map** update with rescue nodes.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🤝 Team
+* **Frontend & UI/UX**: Dashboard design, interactive map, i18n system.
+* **AI Engineer**: Gemini API integration, prompt engineering.
+* **PM**: Scenario design, disaster response logic.
+
+---
+*Built for the Google DeepMind Gemini 3 Hackathon. 2026.*
