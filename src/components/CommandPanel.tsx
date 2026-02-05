@@ -3,12 +3,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Send, Upload, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Message } from '@/lib/types';
-import { cn } from '@/lib/utils'; // shadcn 的工具
+import { cn } from '@/lib/utils';
+import { useLanguage } from '@/components/LanguageContext'; // 1. 引入語言包
 
 interface CommandPanelProps {
   messages: Message[];
@@ -20,6 +20,9 @@ export default function CommandPanel({ messages, isAnalyzing, onUpload }: Comman
   const [input, setInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // 2. 取得翻譯物件 t
+  const { t } = useLanguage();
 
   // 訊息自動捲動到底部
   useEffect(() => {
@@ -39,10 +42,11 @@ export default function CommandPanel({ messages, isAnalyzing, onUpload }: Comman
       {/* 訊息顯示區 */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">
+          
+          {/* 歡迎訊息：改用翻譯變數 (支援換行顯示) */}
           {messages.length === 0 && (
-            <div className="text-center text-zinc-400 mt-10 text-sm">
-              <p>Gemini 3 災難韌性系統已連線。</p>
-              <p>請上傳現場影像以開始分析。</p>
+            <div className="text-center text-zinc-400 mt-10 text-sm whitespace-pre-line">
+              {t.chat.welcome}
             </div>
           )}
           
@@ -67,7 +71,7 @@ export default function CommandPanel({ messages, isAnalyzing, onUpload }: Comman
                   <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
                     <div className="flex items-center gap-2 text-red-400 font-bold">
                       <AlertTriangle size={16} />
-                      風險等級: {msg.analysis.riskLevel}
+                      {t.stats.risk}: {msg.analysis.riskLevel}
                     </div>
                     <div className="space-y-1">
                       {msg.analysis.suggestedTasks.map(task => (
@@ -84,11 +88,11 @@ export default function CommandPanel({ messages, isAnalyzing, onUpload }: Comman
             </div>
           ))}
 
-          {/* AI 思考中的動畫 */}
+          {/* AI 思考中的動畫：改用翻譯變數 */}
           {isAnalyzing && (
             <div className="flex items-center gap-2 text-zinc-400 text-xs animate-pulse">
               <Loader2 className="animate-spin" size={14} />
-              Gemini 3 正在進行多模態推理...
+              {t.chat.analyzing}
             </div>
           )}
         </div>
@@ -110,6 +114,7 @@ export default function CommandPanel({ messages, isAnalyzing, onUpload }: Comman
             className="shrink-0 bg-transparent border-white/20 hover:bg-white/10 text-white"
             onClick={() => fileInputRef.current?.click()}
             disabled={isAnalyzing}
+            title={t.chat.upload} // 加入 hover 提示
           >
             <Upload size={18} />
           </Button>
@@ -117,11 +122,10 @@ export default function CommandPanel({ messages, isAnalyzing, onUpload }: Comman
           <Input 
             value={input} 
             onChange={(e) => setInput(e.target.value)} 
-            placeholder="輸入現場指令..." 
+            placeholder={t.chat.placeholder} // Placeholder 改用翻譯變數
             className="bg-transparent border-white/20 text-white placeholder:text-zinc-500 focus-visible:ring-blue-500"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && input) {
-                // 這裡目前還沒寫純文字發送邏輯，Demo 先主打圖片上傳
                 setInput('');
               }
             }}

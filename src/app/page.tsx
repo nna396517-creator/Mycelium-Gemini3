@@ -6,18 +6,23 @@ import MapCanvas from '@/components/MapCanvas';
 import CommandPanel from '@/components/CommandPanel';
 import { AnalysisResult, Message } from '@/lib/types';
 import { DEMO_SCENARIO } from '@/data/mockScenarios';
-import { Activity, Signal, Battery, Users, Droplets, BriefcaseMedical } from 'lucide-react';
+import { Activity, Signal, Battery, Users } from 'lucide-react'; // 移除沒用到的 icon
+import { useLanguage } from '@/components/LanguageContext';
+import LanguageToggle from '@/components/LanguageToggle';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentScenario, setCurrentScenario] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
+  // 取得翻譯物件 t
+  const { t } = useLanguage(); 
 
   const handleUpload = async (file: File) => {
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: '分析此區域災情，並分派任務。',
+      content: t.chat.userPrompt, // 使用翻譯的提示詞
       attachmentUrl: URL.createObjectURL(file)
     };
     setMessages(prev => [...prev, userMsg]);
@@ -29,7 +34,7 @@ export default function Home() {
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: DEMO_SCENARIO.situationSummary,
+        content: DEMO_SCENARIO.situationSummary, // 這裡通常是後端回傳，暫時維持 Mock
         analysis: DEMO_SCENARIO
       };
       setMessages(prev => [...prev, aiMsg]);
@@ -39,7 +44,7 @@ export default function Home() {
   return (
     <main className="relative w-full h-screen overflow-hidden bg-zinc-950 text-white font-mono selection:bg-blue-500/30">
       
-      {/* 1. 底層：地圖 (請務必換上我上一則回應給你的 MapCanvas 代碼，把浮水印去掉) */}
+      {/* 1. 底層：地圖 */}
       <div className="absolute inset-0 z-0">
         <MapCanvas scenario={currentScenario} />
       </div>
@@ -48,18 +53,28 @@ export default function Home() {
       <div className="absolute inset-0 z-0 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
       <div className="absolute inset-0 z-0 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.9)]"></div>
       
-      {/* 3. 頂部狀態列 (HUD Top Bar) */}
+      {/* 3. 頂部狀態列 (HUD Top Bar) - 已修正版面 */}
       <div className="absolute top-0 left-0 right-0 z-20 p-2 flex justify-between items-center bg-black/60 backdrop-blur border-b border-white/10">
+        {/* 左側：標題與狀態 */}
         <div className="flex items-center gap-4 px-4">
-            <span className="text-blue-400 font-bold tracking-widest text-lg">MYCELIUM v3.0</span>
+            <span className="text-blue-400 font-bold tracking-widest text-lg">{t.header.title}</span>
             <span className="px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs border border-green-500/30 flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/> SYSTEM ONLINE
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/> {t.header.status}
             </span>
         </div>
-        <div className="flex items-center gap-6 px-4 text-xs text-zinc-400">
-            <div className="flex items-center gap-2"><Signal size={14}/> LATENCY: 12ms</div>
-            <div className="flex items-center gap-2"><Activity size={14}/> CPU: Gemini-Pro-Vision</div>
-            <div className="flex items-center gap-2"><Battery size={14}/> POWER: 98%</div>
+
+        {/* 右側：語言切換與系統數據 */}
+        <div className="flex items-center gap-4 px-4">
+           
+           {/* 1. 系統數據 (有分隔線) */}
+           <div className="flex items-center gap-6 px-4 text-xs text-zinc-400 border-l border-white/10 pl-6">
+              <div className="flex items-center gap-2"><Signal size={14}/> {t.stats.latency}: 12ms</div>
+              <div className="flex items-center gap-2"><Activity size={14}/> CPU: Gemini-Pro-Vision</div>
+              <div className="flex items-center gap-2"><Battery size={14}/> POWER: 98%</div>
+           </div>
+
+           {/* 2. 中英語言切換按鈕 */}
+          <LanguageToggle />
         </div>
       </div>
 
@@ -70,12 +85,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 5. 右側：資源監控 (HUD Right Panel) - 這裡我們用假資料裝飾，看起來很專業 */}
+      {/* 5. 右側：資源監控 (HUD Right Panel) - 已全數翻譯 */}
       <div className="absolute right-4 top-16 w-[300px] z-10 flex flex-col gap-4">
         {/* 區域風險指數 */}
         <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10">
             <h3 className="text-zinc-400 text-xs mb-3 flex items-center gap-2">
-                <Activity size={14} className="text-red-500"/> 區域風險指數 (LOCAL RISK)
+                <Activity size={14} className="text-red-500"/> {t.stats.risk}
             </h3>
             <div className="flex items-end gap-1 h-24 mb-2">
                 {[40, 65, 30, 80, 50, 90, 45, 70, 60, 85].map((h, i) => (
@@ -93,25 +108,28 @@ export default function Home() {
         {/* 可用資源 (假資料) */}
         <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 space-y-4">
             <h3 className="text-zinc-400 text-xs flex items-center gap-2">
-                <Users size={14} className="text-blue-500"/> 分散式資源節點 (AVAILABLE)
+                <Users size={14} className="text-blue-500"/> {t.stats.resources}
             </h3>
             
+            {/* Medic */}
             <div className="space-y-1">
-                <div className="flex justify-between text-xs mb-1"><span>醫療救援組 (Medic)</span> <span className="text-blue-400">3/5</span></div>
+                <div className="flex justify-between text-xs mb-1"><span>{t.stats.medic}</span> <span className="text-blue-400">3/5</span></div>
                 <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 w-[60%]"></div>
                 </div>
             </div>
 
+            {/* Supply */}
             <div className="space-y-1">
-                <div className="flex justify-between text-xs mb-1"><span>物資補給 (Supply)</span> <span className="text-yellow-400">8/10</span></div>
+                <div className="flex justify-between text-xs mb-1"><span>{t.stats.supply}</span> <span className="text-yellow-400">8/10</span></div>
                 <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
                     <div className="h-full bg-yellow-500 w-[80%]"></div>
                 </div>
             </div>
 
+            {/* Heavy */}
             <div className="space-y-1">
-                <div className="flex justify-between text-xs mb-1"><span>重型機具 (Heavy)</span> <span className="text-red-400">1/1</span></div>
+                <div className="flex justify-between text-xs mb-1"><span>{t.stats.heavy}</span> <span className="text-red-400">1/1</span></div>
                 <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
                     <div className="h-full bg-red-500 w-[100%] animate-pulse"></div>
                 </div>
