@@ -4,8 +4,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Fingerprint, Lock, ShieldCheck, Loader2, Globe } from 'lucide-react';
+import { Fingerprint, Lock, ShieldCheck, Loader2, AlertCircle } from 'lucide-react'; // 新增 AlertCircle
 import { useLanguage } from '@/components/LanguageContext';
+import LanguageToggle from '@/components/LanguageToggle'; // 1. 引入切換按鈕
 import { cn } from '@/lib/utils';
 
 interface AuthOverlayProps {
@@ -15,9 +16,20 @@ interface AuthOverlayProps {
 export default function AuthOverlay({ onLogin }: AuthOverlayProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [inputId, setInputId] = useState(''); // 儲存輸入的帳號
+  const [error, setError] = useState(false);  // 錯誤狀態
+  
   const { t } = useLanguage();
 
   const handleLogin = () => {
+    // 2. 簡單的驗證邏輯：只允許 "admin" (不分大小寫)
+    if (inputId.trim().toLowerCase() !== 'admin') {
+      setError(true);
+      // 震動或錯誤效果可以透過 CSS animation 做，這裡先用紅色邊框示意
+      return;
+    }
+
+    setError(false);
     setIsLoading(true);
     
     // 模擬驗證過程 (1.5秒)
@@ -25,7 +37,7 @@ export default function AuthOverlay({ onLogin }: AuthOverlayProps) {
       setIsLoading(false);
       setIsSuccess(true);
       
-      // 顯示成功狀態 0.5秒後進入系統
+      // 顯示成功狀態 0.8秒後進入系統
       setTimeout(() => {
         onLogin();
       }, 800);
@@ -34,6 +46,12 @@ export default function AuthOverlay({ onLogin }: AuthOverlayProps) {
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-zinc-950/90 backdrop-blur-sm">
+      
+      {/* 3. 在登入頁面的右上角放置語言切換按鈕 */}
+      <div className="absolute top-6 right-6 z-50">
+        <LanguageToggle />
+      </div>
+
       {/* 背景動態裝飾 */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/30 rounded-full blur-[100px] animate-pulse" />
@@ -47,9 +65,13 @@ export default function AuthOverlay({ onLogin }: AuthOverlayProps) {
         <div className="flex justify-center mb-8">
           <div className={cn(
             "p-4 rounded-full border-2 transition-all duration-500",
-            isSuccess ? "bg-green-500/20 border-green-500 text-green-500" : "bg-blue-500/10 border-blue-500/50 text-blue-400"
+            isSuccess 
+              ? "bg-green-500/20 border-green-500 text-green-500" 
+              : error 
+                ? "bg-red-500/10 border-red-500 text-red-500" // 錯誤時變紅
+                : "bg-blue-500/10 border-blue-500/50 text-blue-400"
           )}>
-            {isSuccess ? <ShieldCheck size={48} /> : <Fingerprint size={48} />}
+            {isSuccess ? <ShieldCheck size={48} /> : error ? <AlertCircle size={48} /> : <Fingerprint size={48} />}
           </div>
         </div>
 
@@ -66,12 +88,26 @@ export default function AuthOverlay({ onLogin }: AuthOverlayProps) {
         {/* 表單區域 */}
         <div className="space-y-4">
           <div className="relative">
-            <Lock className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
+            <Lock className={cn("absolute left-3 top-3 h-4 w-4 transition-colors", error ? "text-red-500" : "text-zinc-500")} />
             <Input 
+              value={inputId}
+              onChange={(e) => {
+                setInputId(e.target.value);
+                if (error) setError(false); // 使用者開始打字時，取消錯誤狀態
+              }}
               placeholder={t.auth.idPlaceholder}
-              className="pl-9 bg-zinc-900/50 border-white/10 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500"
+              className={cn(
+                "pl-9 bg-zinc-900/50 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500 transition-all",
+                error ? "border-red-500 focus-visible:ring-red-500" : "border-white/10"
+              )}
               disabled={isLoading || isSuccess}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()} // 按 Enter 也可以登入
             />
+          </div>
+
+          {/* 錯誤訊息提示 */}
+          <div className={cn("text-xs text-red-500 font-mono text-center h-4", error ? "opacity-100" : "opacity-0")}>
+            {t.auth.error}
           </div>
 
           <Button 
@@ -79,7 +115,9 @@ export default function AuthOverlay({ onLogin }: AuthOverlayProps) {
               "w-full h-12 font-bold tracking-wider transition-all duration-300",
               isSuccess 
                 ? "bg-green-600 hover:bg-green-700 text-white" 
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                : error
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
             )}
             onClick={handleLogin}
             disabled={isLoading || isSuccess}
@@ -99,7 +137,7 @@ export default function AuthOverlay({ onLogin }: AuthOverlayProps) {
         </div>
 
         {/* 底部裝飾字 */}
-        <div className="mt-8 text-center">
+        <div className="mt-6 text-center">
           <p className="text-[10px] text-zinc-600 font-mono">
             SECURE CONNECTION :: ENCRYPTED VIA GEMINI-3
           </p>
