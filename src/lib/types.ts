@@ -23,13 +23,21 @@ export interface Task {
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 }
 
+// 定義三個維度的評分因子
+export interface RiskFactors {
+  structuralDamage: number; // 結構受損度 (0-100)
+  fireHazard: number;       // 火災/爆炸風險 (0-100)
+  humanDanger: number;      // 人員受困危急度 (0-100)
+}
+
 // Gemini 分析後的完整結果
 export interface AnalysisResult {
-  riskLevel: RiskLevel;
-  situationSummary: string; // 例如："畫面顯示建築物結構受損，有人員受困..."
-  requiredResources: string[]; // ["水", "醫療包", "大型機具"]
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  riskScore: number;        // 最終加權分數 (0-100)
+  riskFactors: RiskFactors; // 詳細評分
+  situationSummary: string;
   suggestedTasks: Task[];
-  timestamp: string;
+  coordinates: { lat: number; lng: number };
 }
 
 // 聊天視窗用的訊息格式

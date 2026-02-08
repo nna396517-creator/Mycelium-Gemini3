@@ -21,6 +21,9 @@ export default function Home() {
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const { t } = useLanguage(); 
 
+  // 定義一個狀態來存圖表數據 (預設給一些假資料或是全 0)
+  const [riskHistory, setRiskHistory] = useState<number[]>([20, 30, 25, 40, 35, 50, 45, 60, 55, 65]);
+
   // 真實電量偵測
   const [batteryLevel, setBatteryLevel] = useState<number>(100);
   useEffect(() => {
@@ -45,9 +48,20 @@ export default function Home() {
     setIsAnalyzing(true);
     setIsPanelMinimized(false); // 自動展開
 
+    // 模擬 API 呼叫延遲
     setTimeout(() => {
       setIsAnalyzing(false);
       setCurrentScenario(DEMO_SCENARIO);
+      
+      // 分析完成後，更新右邊的圖表數據
+      setRiskHistory(prev => {
+        // 這裡暫時用 89 分模擬 API 回傳的 riskScore (對應 DEMO_SCENARIO)
+        // 未來串接 API 後，這裡改成 result.riskScore 即可
+        const newScore = 89; 
+        const newHistory = [...prev, newScore]; // 加入新分數
+        return newHistory.slice(-10); // 只保留最後 10 筆，讓圖表像是在「流動」
+      });
+
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -134,20 +148,10 @@ export default function Home() {
           {/* 左側指揮面板 - [RWD 分流設定] */}
           <div 
             className={cn(
-              // 基礎樣式：固定定位、寬度、層級、動畫
               "fixed left-0 w-full z-30 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] flex flex-col",
-              
-              // --- 手機版 (Mobile) 設定：貼底 ---
               "bottom-0", 
-              // 高度：最小化時 60px，展開時 45dvh
               isPanelMinimized ? "h-[60px]" : "h-[45dvh]",
-              
-              // --- 電腦版 (Desktop) 設定：貼頂 ---
-              // md:top-16: 距離頂部 4rem (避開狀態列)
-              // md:bottom-auto: 取消手機版的 bottom-0
               "md:left-4 md:w-[400px] md:top-16 md:bottom-auto",
-              
-              // 電腦版高度：最小化時 60px，展開時 80vh
               isPanelMinimized 
                 ? "md:h-[60px]" 
                 : "md:h-[80vh]"
@@ -172,16 +176,19 @@ export default function Home() {
                 <h3 className="text-zinc-400 text-xs mb-3 flex items-center gap-2">
                     <Activity size={14} className="text-red-500"/> {t.stats.risk}
                 </h3>
+                {/* 渲染動態圖表 */}
                 <div className="flex items-end gap-1 h-24 mb-2">
-                    {[40, 65, 30, 80, 50, 90, 45, 70, 60, 85].map((h, i) => (
+                    {riskHistory.map((h, i) => (
                         <div key={i} className="flex-1 bg-red-500/20 hover:bg-red-500/50 transition-all rounded-t-sm relative group">
                             <div style={{height: `${h}%`}} className="absolute bottom-0 w-full bg-red-500/50 group-hover:bg-red-400"></div>
                         </div>
                     ))}
                 </div>
                 <div className="flex justify-between text-2xl font-bold text-red-500">
-                    <span>CRITICAL</span>
-                    <span>89%</span>
+                    {/* 顯示風險等級，如果還沒分析則顯示 STANDBY */}
+                    <span>{currentScenario?.riskLevel || 'STANDBY'}</span>
+                    {/* 顯示最新一筆的分數 */}
+                    <span>{riskHistory[riskHistory.length - 1]}%</span>
                 </div>
             </div>
 
