@@ -48,8 +48,7 @@ export async function POST(request: Request) {
       summary: "Detected severe structural collapse with potential trapped survivors. Minor fire hazard observed in the west wing."
     };
 
-    // 2. 執行權重計算 (這就是我們之前設計的公式)
-    // 權重：人命(0.5) > 結構(0.3) > 火災(0.2)
+    // 2. 執行權重計算公式：人命(0.5) > 結構(0.3) > 火災(0.2)
     const weightedScore = Math.round(
       (mockAiFactors.structuralDamage * 0.3) +
       (mockAiFactors.fireHazard * 0.2) +
