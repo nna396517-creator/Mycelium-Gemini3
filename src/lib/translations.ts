@@ -12,10 +12,25 @@ export const translations = {
     stats: {
         latency: "延遲",
         risk: "區域風險指數",
+        calcWeights: "計算權重",
         resources: "分散式資源節點 (AVAILABLE)",
         medic: "醫療救援組 (Medic)",
         supply: "物資補給 (Supply)",
         heavy: "重型機具 (Heavy)"
+    },
+    // 圖表事件翻譯
+    chart: {
+        patrol: "例行巡邏",
+        vibration: "輕微震動",
+        clear: "區域安全",
+        smoke: "偵測到煙霧",
+        falseAlarm: "誤報",
+        aftershock: "餘震警報",
+        structure: "結構檢查",
+        collapse: "B區坍塌",
+        rescue: "救援隊抵達",
+        gas: "偵測到瓦斯外洩",
+        critical: "偵測到嚴重損傷"
     },
     chat: {
         welcome: "Gemini 3 災難韌性系統已連線。\n請上傳現場影像以開始分析。",
@@ -52,10 +67,25 @@ export const translations = {
     stats: {
         latency: "LATENCY",
         risk: "LOCAL RISK INDEX",
+        calcWeights: "CALCULATED WEIGHTS",
         resources: "AVAILABLE RESOURCES",
         medic: "Medical Units",
         supply: "Supply Units",
         heavy: "Heavy Machinery"
+    },
+    // Chart events
+    chart: {
+        patrol: "Routine Patrol",
+        vibration: "Minor Vibrations",
+        clear: "All Clear",
+        smoke: "Smoke Detected",
+        falseAlarm: "False Alarm",
+        aftershock: "Aftershock Warning",
+        structure: "Structural Check",
+        collapse: "Sector B Collapse",
+        rescue: "Rescue Team Arrival",
+        gas: "Gas Leak Detected",
+        critical: "Critical Damage Detected"
     },
     chat: {
         welcome: "Gemini 3 System Connected.\nPlease upload scene imagery to begin analysis.",

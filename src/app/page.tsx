@@ -7,11 +7,18 @@ import CommandPanel from '@/components/CommandPanel';
 import AuthOverlay from '@/components/AuthOverlay';
 import { AnalysisResult, Message } from '@/lib/types';
 import { DEMO_SCENARIO } from '@/data/mockScenarios';
-import { Activity, Signal, Battery, Users } from 'lucide-react';
+import { Activity, Signal, Battery, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import UserProfile from '@/components/UserProfile';
 import { cn } from '@/lib/utils';
+
+// 定義圖表數據點的結構
+interface RiskDataPoint {
+  score: number;
+  time: string;
+  reason: string;
+}
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -19,10 +26,27 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
+  const [isRiskDetailsOpen, setIsRiskDetailsOpen] = useState(false);
   const { t } = useLanguage(); 
 
-  // 定義一個狀態來存圖表數據 (預設給一些假資料或是全 0)
-  const [riskHistory, setRiskHistory] = useState<number[]>([20, 30, 25, 40, 35, 50, 45, 60, 55, 65]);
+  // 升級 riskHistory 的資料結構，加入時間與事件
+  const [riskHistory, setRiskHistory] = useState<RiskDataPoint[]>([
+    { score: 20, time: "09:00", reason: "patrol" },
+    { score: 30, time: "09:15", reason: "vibration" },
+    { score: 25, time: "09:30", reason: "clear" },
+    { score: 40, time: "09:45", reason: "smoke" },
+    { score: 35, time: "10:00", reason: "falseAlarm" },
+    { score: 50, time: "10:15", reason: "aftershock" },
+    { score: 45, time: "10:30", reason: "structure" },
+    { score: 60, time: "10:45", reason: "collapse" },
+    { score: 55, time: "11:00", reason: "rescue" },
+    { score: 65, time: "11:15", reason: "gas" },
+  ]);
+
+  // 記錄目前滑鼠指到的資料點
+  const [hoveredPoint, setHoveredPoint] = useState<RiskDataPoint | null>(null);
+  // 記錄 tooltip 的位置 (X 座標百分比)
+  const [tooltipPos, setTooltipPos] = useState<number>(0);
 
   // 真實電量偵測
   const [batteryLevel, setBatteryLevel] = useState<number>(100);
@@ -53,13 +77,15 @@ export default function Home() {
       setIsAnalyzing(false);
       setCurrentScenario(DEMO_SCENARIO);
       
-      // 分析完成後，更新右邊的圖表數據
+      // 更新圖表時，推入完整的物件資料
       setRiskHistory(prev => {
-        // 這裡暫時用 89 分模擬 API 回傳的 riskScore (對應 DEMO_SCENARIO)
-        // 未來串接 API 後，這裡改成 result.riskScore 即可
-        const newScore = 89; 
-        const newHistory = [...prev, newScore]; // 加入新分數
-        return newHistory.slice(-10); // 只保留最後 10 筆，讓圖表像是在「流動」
+        const newPoint: RiskDataPoint = {
+            score: 89, 
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            reason: "critical" // 使用 key -> 未來可改成 AI 分析的簡述
+        };
+        const newHistory = [...prev, newPoint];
+        return newHistory.slice(-10);
       });
 
       const aiMsg: Message = {
@@ -171,27 +197,153 @@ export default function Home() {
           </div>
 
           {/* 右側資源面板 */}
-          <div className="hidden md:flex absolute right-4 top-16 w-[300px] z-10 flex-col gap-4 animate-in fade-in slide-in-from-right-10 duration-700">
-            <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10">
-                <h3 className="text-zinc-400 text-xs mb-3 flex items-center gap-2">
-                    <Activity size={14} className="text-red-500"/> {t.stats.risk}
-                </h3>
-                {/* 渲染動態圖表 */}
-                <div className="flex items-end gap-1 h-24 mb-2">
-                    {riskHistory.map((h, i) => (
-                        <div key={i} className="flex-1 bg-red-500/20 hover:bg-red-500/50 transition-all rounded-t-sm relative group">
-                            <div style={{height: `${h}%`}} className="absolute bottom-0 w-full bg-red-500/50 group-hover:bg-red-400"></div>
-                        </div>
-                    ))}
+            <div className="hidden md:flex absolute right-4 top-16 w-[300px] z-10 flex-col gap-4 animate-in fade-in slide-in-from-right-10 duration-700">
+            
+              {/* LOCAL RISK INDEX 卡片 */}
+            <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 transition-all duration-300">
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-zinc-400 text-xs flex items-center gap-2">
+                        <Activity size={14} className="text-red-500"/> {t.stats.risk}
+                    </h3>
                 </div>
-                <div className="flex justify-between text-2xl font-bold text-red-500">
-                    {/* 顯示風險等級，如果還沒分析則顯示 STANDBY */}
-                    <span>{currentScenario?.riskLevel || 'STANDBY'}</span>
-                    {/* 顯示最新一筆的分數 */}
-                    <span>{riskHistory[riskHistory.length - 1]}%</span>
+
+                <div className="mb-4 border-b border-white/5 pb-2">
+                    <button 
+                      onClick={() => setIsRiskDetailsOpen(!isRiskDetailsOpen)}
+                      className="flex items-center justify-between w-full text-[10px] text-zinc-500 hover:text-blue-400 transition-colors py-1"
+                    >
+                        <span className="font-bold tracking-wider">{t.stats.calcWeights}</span>
+                        {isRiskDetailsOpen ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
+                    </button>
+
+                    <div className={cn(
+                        "grid transition-all duration-300 ease-in-out overflow-hidden",
+                        isRiskDetailsOpen ? "grid-rows-[1fr] opacity-100 mt-2" : "grid-rows-[0fr] opacity-0 mt-0"
+                    )}>
+                        <div className="min-h-0 space-y-2">
+                            {[
+                                { label: "STRUCTURAL DAMAGE", score: currentScenario?.riskFactors?.structuralDamage || 0 },
+                                { label: "HUMAN DANGER", score: currentScenario?.riskFactors?.humanDanger || 0 },
+                                { label: "FIRE HAZARD", score: currentScenario?.riskFactors?.fireHazard || 0 },
+                            ].map((factor, idx) => (
+                                <div key={idx} className="flex justify-between items-center text-[10px]">
+                                    <span className="text-zinc-400">{factor.label}</span>
+                                    <span className="font-mono text-white">{factor.score}</span>
+                                </div>
+                            ))}
+                            
+                            <div className="pt-1 text-[9px] text-zinc-600 italic font-mono">
+                                * Weights: Human(50%) + Structure(30%) + Fire(20%)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* SVG 折線趨勢圖 */}
+                <div className="relative h-24 w-full mb-1 group" onMouseLeave={() => setHoveredPoint(null)}>
+                    
+                    {/* Tooltip 資訊框 */}
+                    {hoveredPoint && (
+                        <div 
+                            className="absolute z-20 top-[-40px] -translate-x-1/2 bg-black/90 border border-blue-500/30 text-white text-[10px] p-2 rounded shadow-[0_0_10px_rgba(59,130,246,0.5)] whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-200"
+                            style={{ left: `${tooltipPos}%` }}
+                        >
+                            <div className="font-bold text-blue-400">{hoveredPoint.time}</div>
+                            
+                            <div className="text-zinc-300">
+                                {(t as any).chart?.[hoveredPoint.reason] || hoveredPoint.reason}
+                            </div>
+                            
+                            <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-2 h-2 bg-black/90 border-r border-b border-blue-500/30 rotate-45"></div>
+                        </div>
+                    )}
+
+                    <div className="absolute inset-0 grid grid-cols-4 gap-4 opacity-20 pointer-events-none">
+                        <div className="border-r border-dashed border-zinc-600"></div>
+                        <div className="border-r border-dashed border-zinc-600"></div>
+                        <div className="border-r border-dashed border-zinc-600"></div>
+                    </div>
+                    <div className="absolute inset-0 grid grid-rows-2 gap-4 opacity-20 pointer-events-none">
+                        <div className="border-b border-dashed border-zinc-600"></div>
+                    </div>
+
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.5" />
+                                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                            </linearGradient>
+                        </defs>
+                        
+                        <path 
+                            d={`
+                              M 0 100 
+                              ${riskHistory.map((pt, i) => `L ${(i / (riskHistory.length - 1)) * 100} ${100 - pt.score}`).join(' ')} 
+                              L 100 100 Z
+                            `}
+                            fill="url(#lineGradient)"
+                            className="transition-all duration-500 ease-in-out"
+                        />
+
+                        <polyline
+                            points={riskHistory.map((pt, i) => `${(i / (riskHistory.length - 1)) * 100},${100 - pt.score}`).join(' ')}
+                            fill="none"
+                            stroke="#3b82f6"
+                            strokeWidth="2"
+                            vectorEffect="non-scaling-stroke"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="transition-all duration-500 ease-in-out drop-shadow-[0_0_4px_rgba(59,130,246,0.8)]"
+                        />
+
+                        {/* 互動節點 (透明感應區 + 懸浮效果) */}
+                        {riskHistory.map((pt, i) => {
+                            const x = (i / (riskHistory.length - 1)) * 100;
+                            const y = 100 - pt.score;
+                            const isLast = i === riskHistory.length - 1;
+                            const isHovered = hoveredPoint === pt;
+
+                            return (
+                                <g key={i}>
+                                    {/* 透明的大圓圈，用來增加滑鼠感應範圍 */}
+                                    <circle 
+                                        cx={x} cy={y} r="8" 
+                                        fill="transparent" 
+                                        className="cursor-crosshair"
+                                        onMouseEnter={() => {
+                                            setHoveredPoint(pt);
+                                            setTooltipPos(x);
+                                        }}
+                                    />
+                                    {/* 視覺上的小圓點 */}
+                                    <circle 
+                                        cx={x} cy={y} r={isHovered ? 4 : (isLast ? 3 : 2)}
+                                        className={cn(
+                                            "transition-all duration-200",
+                                            isHovered ? "fill-white stroke-blue-500 stroke-2" : (isLast ? "fill-blue-400 animate-pulse" : "fill-blue-500/50")
+                                        )}
+                                    />
+                                </g>
+                            );
+                        })}
+                    </svg>
+                </div>
+                
+                <div className="flex justify-between items-end">
+                    <span className="text-2xl font-bold text-red-500 animate-pulse">
+                        {currentScenario?.riskLevel || 'STANDBY'}
+                    </span>
+                    <div className="text-right">
+                        <div className="text-[10px] text-zinc-500 mb-[-2px]">CURRENT</div>
+                        {/* 這裡要存取 .score */}
+                        <span className="text-2xl font-bold text-red-500">
+                            {riskHistory[riskHistory.length - 1].score}%
+                        </span>
+                    </div>
                 </div>
             </div>
-
+            
+            {/* RESOURCES 卡片 */}
             <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 space-y-4">
                 <h3 className="text-zinc-400 text-xs flex items-center gap-2">
                     <Users size={14} className="text-blue-500"/> {t.stats.resources}
