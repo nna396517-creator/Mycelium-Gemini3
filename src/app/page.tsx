@@ -61,24 +61,51 @@ export default function Home() {
     }
   }, []);
 
-  // 模擬 AI 對防災知識的專業回應
+  // 模擬 AI 對防災知識的專業回應 (支援雙語)
   const getAIResponse = (input: string): string => {
     const text = input.toLowerCase();
+    
+    // 1. CPR
     if (text.includes("cpr") || text.includes("心肺復甦")) {
-      return "**🚑CPR 急救步驟指南：**\n\n1. **確認環境安全**：確保自己與患者不處於危險中。\n2. **叫**：拍打雙肩，確認患者意識。\n3. **叫**：指定旁人撥打 119 並取得 AED。\n4. **C (Compressions)**：胸外按壓，速率 100-120 下/分，深度 5-6 公分。\n5. **A (Airway)**：暢通呼吸道 (壓額抬下巴)。\n6. **B (Breathing)**：人工呼吸 (若不願意可持續按壓)。\n\n*持續操作直到醫護人員抵達。*";
+      // 判斷是否為英文提問 (簡單判斷)
+      if (text.includes("how") || text.includes("step")) {
+        return "**🚑 CPR Steps:**\n\n1. **Check Safety**: Ensure environment is safe.\n2. **Check Responsiveness**: Tap shoulders and shout.\n3. **Call 911**: Get AED.\n4. **Compressions**: Push hard and fast in center of chest (100-120/min).\n5. **Airway**: Tilt head, lift chin.\n6. **Breaths**: Give 2 rescue breaths.\n\n*Continue until help arrives.*";
+      }
+      return "**🚑 CPR 急救步驟指南：**\n\n1. **確認環境安全**：確保自己與患者不處於危險中。\n2. **叫**：拍打雙肩，確認患者意識。\n3. **叫**：指定旁人撥打 119 並取得 AED。\n4. **C (Compressions)**：胸外按壓，速率 100-120 下/分，深度 5-6 公分。\n5. **A (Airway)**：暢通呼吸道 (壓額抬下巴)。\n6. **B (Breathing)**：人工呼吸 (若不願意可持續按壓)。\n\n*持續操作直到醫護人員抵達。*";
     }
-    if (text.includes("滅火") || text.includes("火災")) {
+    
+    // 2. 滅火器 (Fire)
+    if (text.includes("滅火") || text.includes("火災") || text.includes("fire") || text.includes("extinguisher")) {
+      if (text.includes("fire") || text.includes("extinguisher")) {
+         return "**🔥 Fire Extinguisher (PASS):**\n\n1. **Pull** the pin.\n2. **Aim** at the base of fire.\n3. **Squeeze** the lever.\n4. **Sweep** side to side.\n\n*Warning: Evacuate if fire is larger than a wastebasket.*";
+      }
       return "**🔥 滅火器操作口訣 (拉、瞄、壓、掃)：**\n\n1. **拉**：拉開安全插梢。\n2. **瞄**：握住噴管，瞄準火源底部。\n3. **壓**：用力壓下握把。\n4. **掃**：向火源底部左右掃射。\n\n*注意：若火勢超過腰部高度，請立即放棄滅火並逃生。*";
     }
-    if (text.includes("地震") || text.includes("躲")) {
+    
+    // 3. 地震 (Earthquake)
+    if (text.includes("地震") || text.includes("躲") || text.includes("earthquake") || text.includes("shake")) {
+      if (text.includes("earthquake")) {
+        return "**🏚️ Earthquake Safety (Drop, Cover, Hold on):**\n\n1. **Drop** to your hands and knees.\n2. **Cover** your head and neck under a sturdy table.\n3. **Hold on** until shaking stops.\n\n*Do not run outside during shaking.*";
+      }
       return "**🏚️ 地震避難三步驟 (DCH)：**\n\n1. **趴下 (Drop)**：降低重心，避免跌倒。\n2. **掩護 (Cover)**：躲在堅固桌下，保護頭部頸部。\n3. **穩住 (Hold on)**：抓住桌腳，隨桌子移動。\n\n*切記：不要急著衝出門外，注意掉落物。*";
     }
-    if (text.includes("水災") || text.includes("淹水")) {
+    
+    // 4. 水災 (Flood)
+    if (text.includes("水災") || text.includes("淹水") || text.includes("flood") || text.includes("water")) {
+      if (text.includes("flood") || text.includes("water")) {
+        return "**🌊 Flood Response:**\n\n1. Move to higher ground immediately.\n2. Turn off utilities (gas/power) to prevent fires.\n3. Do not walk or drive through floodwaters.\n4. Prepare emergency kit.";
+      }
       return "**🌊 水災應變措施：**\n\n1. 迅速往高處移動 (二樓以上)。\n2. 關閉瓦斯與電源總開關，避免觸電或氣爆。\n3. 準備三日份乾糧與飲用水。\n4. 若受困車內且水淹過輪胎，應立即棄車逃生。";
     }
-    if (text.includes("避難包")) {
+    
+    // 5. 避難包 (Kit)
+    if (text.includes("避難包") || text.includes("kit") || text.includes("supplies")) {
+      if (text.includes("kit") || text.includes("supplies")) {
+        return "**🎒 Emergency Kit Checklist:**\n\n1. **Water & Food**: 3-day supply (non-perishable).\n2. **First Aid**: Bandages, antiseptics, meds.\n3. **Tools**: Flashlight (extra batteries), whistle, multi-tool.\n4. **Documents**: ID copies, cash, map.\n5. **Warmth**: Blanket, rain poncho.";
+      }
       return "**🎒 緊急避難包建議清單：**\n\n1. **水與食物**：每人 3 公升水、能量棒、罐頭。\n2. **保暖與衣物**：輕便雨衣、暖暖包、替換衣物。\n3. **醫療用品**：急救箱、個人藥品。\n4. **工具**：手電筒 (含電池)、哨子、瑞士刀、行動電源。\n5. **證件**：身分證影本、現金。";
     }
+
     return `Command received: "${input}"\nSystem is updating parameters based on your input. Monitoring active sectors.`;
   };
 

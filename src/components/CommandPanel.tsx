@@ -142,12 +142,13 @@ export default function CommandPanel({
   
   const { t } = useLanguage();
 
+  // 改用 t.suggested 讀取翻譯，(t as any) 用來繞過尚未更新的型別檢查
   const SUGGESTED_QUERIES = [
-    { label: "🚑 CPR 急救教學", value: "請教我 CPR 心肺復甦術的步驟" },
-    { label: "🔥 滅火器用法", value: "滅火器該怎麼使用？" },
-    { label: "🏚️ 地震避難", value: "地震發生時我該躲哪裡？" },
-    { label: "🌊 水災應變", value: "淹水時的緊急應變措施" },
-    { label: "🎒 避難包清單", value: "緊急避難包裡面要放什麼？" },
+    { label: (t as any).suggested.cprLabel, value: (t as any).suggested.cprValue },
+    { label: (t as any).suggested.fireLabel, value: (t as any).suggested.fireValue },
+    { label: (t as any).suggested.quakeLabel, value: (t as any).suggested.quakeValue },
+    { label: (t as any).suggested.floodLabel, value: (t as any).suggested.floodValue },
+    { label: (t as any).suggested.kitLabel, value: (t as any).suggested.kitValue },
   ];
 
   useEffect(() => {
@@ -219,21 +220,8 @@ export default function CommandPanel({
           {/* 字體調整區 */}
           <div 
             className="flex items-center bg-white/5 rounded-lg border border-white/5 p-0.5"
-            onClick={(e) => e.stopPropagation()} // 防止觸發最小化
+            onClick={(e) => e.stopPropagation()} 
           >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-white/10"
-              onClick={() => setFontLevel(prev => Math.min(FONT_SIZES.length - 1, prev + 1))}
-              disabled={fontLevel === FONT_SIZES.length - 1}
-              title="Larger Font"
-            >
-              <AArrowUp size={14} />
-            </Button>
-
-            <div className="w-px h-3 bg-white/10 mx-0.5" />
-
             <Button
               variant="ghost"
               size="icon"
@@ -244,9 +232,21 @@ export default function CommandPanel({
             >
               <AArrowDown size={14} />
             </Button>
+
+            <div className="w-px h-3 bg-white/10 mx-0.5" />
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-white/10"
+              onClick={() => setFontLevel(prev => Math.min(FONT_SIZES.length - 1, prev + 1))}
+              disabled={fontLevel === FONT_SIZES.length - 1}
+              title="Larger Font"
+            >
+              <AArrowUp size={14} />
+            </Button>
           </div>
 
-          {/* 分隔線 */}
           <div className="w-px h-3 bg-white/20 mx-1" />
 
           {/* 功能按鈕區 */}

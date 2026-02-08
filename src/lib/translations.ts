@@ -41,6 +41,19 @@ export const translations = {
         clearHistory: "清除對話紀錄",
         historyCleared: "紀錄已清除"
     },
+    // 建議提問翻譯
+    suggested: {
+        cprLabel: "🚑 CPR 急救教學",
+        cprValue: "請教我 CPR 心肺復甦術的步驟",
+        fireLabel: "🔥 滅火器用法",
+        fireValue: "滅火器該怎麼使用？",
+        quakeLabel: "🏚️ 地震避難",
+        quakeValue: "地震發生時我該躲哪裡？",
+        floodLabel: "🌊 水災應變",
+        floodValue: "淹水時的緊急應變措施",
+        kitLabel: "🎒 避難包清單",
+        kitValue: "緊急避難包裡面要放什麼？"
+    },
     map: {
         offline: "離線地圖模式"
     },
@@ -95,6 +108,19 @@ export const translations = {
         userPrompt: "Analyze this area and assign tasks.",
         clearHistory: "Clear History",
         historyCleared: "History Cleared"
+    },
+    // Suggested queries translation
+    suggested: {
+        cprLabel: "🚑 CPR Guide",
+        cprValue: "How to perform CPR step-by-step?",
+        fireLabel: "🔥 Extinguisher",
+        fireValue: "How to use a fire extinguisher?",
+        quakeLabel: "🏚️ Earthquake",
+        quakeValue: "Where to hide during an earthquake?",
+        floodLabel: "🌊 Flood Response",
+        floodValue: "Emergency measures for flooding",
+        kitLabel: "🎒 Emergency Kit",
+        kitValue: "What should be in an emergency kit?"
     },
     map: {
         offline: "OFFLINE MAP"
