@@ -11,12 +11,14 @@ import { Activity, Signal, Battery, Users } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import UserProfile from '@/components/UserProfile';
+import { cn } from '@/lib/utils';
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentScenario, setCurrentScenario] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const { t } = useLanguage(); 
 
   // 真實電量偵測
@@ -41,6 +43,7 @@ export default function Home() {
     };
     setMessages(prev => [...prev, userMsg]);
     setIsAnalyzing(true);
+    setIsPanelMinimized(false); // 自動展開
 
     setTimeout(() => {
       setIsAnalyzing(false);
@@ -55,18 +58,36 @@ export default function Home() {
     }, 3000);
   };
 
+  const handleSendMessage = (text: string) => {
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: text,
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsPanelMinimized(false); // 自動展開
+
+    setIsAnalyzing(true);
+    setTimeout(() => {
+      setIsAnalyzing(false);
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Command received: "${text}"\nSystem is updating parameters based on your input. Monitoring active sectors.`
+      };
+      setMessages(prev => [...prev, aiMsg]);
+    }, 1500);
+  };
+
   const handleLogout = () => {
     setIsLoggedIn(false);
   };
 
-  // [新增] 清除對話紀錄
   const handleClearHistory = () => {
     setMessages([]);
-    setCurrentScenario(null); // 選擇性：清除對話時要不要把地圖上的點也清掉？如果要清掉就留這行
   };
 
   return (
-    // [修正] h-screen -> h-[100dvh] 解決手機版網址列遮擋問題
     <main className="relative w-full h-[100dvh] overflow-hidden bg-zinc-950 text-white font-mono selection:bg-blue-500/30">
       
       {!isLoggedIn && (
@@ -84,7 +105,6 @@ export default function Home() {
       
       {/* 頂部狀態列 */}
       <div className="absolute top-0 left-0 right-0 z-20 p-2 md:p-3 flex justify-between items-center bg-black/60 backdrop-blur border-b border-white/10 transition-all">
-        {/* 左側：標題 */}
         <div className="flex items-center gap-2 md:gap-4 px-2 md:px-4">
             <span className="text-blue-400 font-bold tracking-widest text-sm md:text-lg whitespace-nowrap">MYCELIUM v3</span>
             <span className="hidden md:flex px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs border border-green-500/30 items-center gap-1">
@@ -93,7 +113,6 @@ export default function Home() {
             <div className="md:hidden w-2 h-2 rounded-full bg-green-500 animate-pulse ml-1"/> 
         </div>
 
-        {/* 右側：數據與工具 */}
         <div className="flex items-center gap-2 md:gap-4 px-2 md:px-4">
            <div className="flex items-center gap-4 md:gap-6 px-2 md:px-4 text-[10px] md:text-xs text-zinc-400 border-r border-white/10 pr-4 md:pr-6">
               <div className="hidden md:flex items-center gap-2"><Signal size={14}/> {t.stats.latency}: 12ms</div>
@@ -103,7 +122,6 @@ export default function Home() {
                   <span>{batteryLevel}%</span>
               </div>
            </div>
-
            <UserProfile onLogout={handleLogout} />
            <div className="scale-90 md:scale-100 origin-right">
              <LanguageToggle /> 
@@ -113,17 +131,37 @@ export default function Home() {
 
       {isLoggedIn && (
         <>
-          {/* 左側指揮面板 */}
-          <div className="fixed bottom-0 left-0 w-full h-[45dvh] z-30 
-                          md:absolute md:left-4 md:top-16 md:bottom-4 md:w-[400px] md:h-auto 
-                          flex flex-col gap-2 
-                          animate-in slide-in-from-bottom-10 duration-700 shadow-2xl">
-            <div className="flex-1 overflow-hidden h-full md:rounded-xl md:border md:border-white/10">
+          {/* 左側指揮面板 - [RWD 分流設定] */}
+          <div 
+            className={cn(
+              // 基礎樣式：固定定位、寬度、層級、動畫
+              "fixed left-0 w-full z-30 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] flex flex-col",
+              
+              // --- 手機版 (Mobile) 設定：貼底 ---
+              "bottom-0", 
+              // 高度：最小化時 60px，展開時 45dvh
+              isPanelMinimized ? "h-[60px]" : "h-[45dvh]",
+              
+              // --- 電腦版 (Desktop) 設定：貼頂 ---
+              // md:top-16: 距離頂部 4rem (避開狀態列)
+              // md:bottom-auto: 取消手機版的 bottom-0
+              "md:left-4 md:w-[400px] md:top-16 md:bottom-auto",
+              
+              // 電腦版高度：最小化時 60px，展開時 80vh
+              isPanelMinimized 
+                ? "md:h-[60px]" 
+                : "md:h-[80vh]"
+            )}
+          >
+            <div className="flex-1 overflow-hidden h-full">
               <CommandPanel 
                 messages={messages} 
                 isAnalyzing={isAnalyzing} 
                 onUpload={handleUpload} 
-                onClear={handleClearHistory} // [新增] 傳入清除函式
+                onClear={handleClearHistory}
+                onSendMessage={handleSendMessage}
+                isMinimized={isPanelMinimized}
+                onToggleMinimize={() => setIsPanelMinimized(!isPanelMinimized)}
               />
             </div>
           </div>
