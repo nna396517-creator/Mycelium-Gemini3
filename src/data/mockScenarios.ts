@@ -1,5 +1,46 @@
 // src/data/mockScenarios.ts
+
 import { AnalysisResult } from "@/lib/types";
+
+export const DEMO_SCENARIO: AnalysisResult = {
+  timestamp: new Date().toISOString(),
+  riskLevel: "CRITICAL",
+  situationSummary:
+    "[AI Vision Analysis] A magnitude 6.5 strong earthquake has been detected, causing severe structural damage to the building. Thermal imaging indicates signs of life on the 3rd floor; however, a ruptured gas pipeline in the area poses a fire hazard.",
+  requiredResources: [
+    "Life Detection Device",
+    "Fire Truck (Foam Type)",
+    "Structural Support Unit"
+  ],
+  suggestedTasks: [
+    {
+      id: "t-1",
+      role: "RESCUER",
+      description: "Enter 3F, No. 107, Linsen North Road to search for trapped individuals",
+      priority: 1,
+      targetLocation: { lat: 25.0478, lng: 121.5170 }, // Near Taipei Main Station
+      status: "PENDING"
+    },
+    {
+      id: "t-2",
+      role: "SUPPLY",
+      description: "Establish a 50-meter perimeter and shut off the gas supply",
+      priority: 1,
+      targetLocation: { lat: 25.0480, lng: 121.5175 },
+      status: "IN_PROGRESS"
+    },
+    {
+      id: "t-3",
+      role: "MEDIC",
+      description: "Set up a triage station in front of the FamilyMart convenience store",
+      priority: 2,
+      targetLocation: { lat: 25.0475, lng: 121.5165 },
+      status: "PENDING"
+    }
+  ]
+};
+
+/*import { AnalysisResult } from "@/lib/types";
 
 export const DEMO_SCENARIO: AnalysisResult = {
   timestamp: new Date().toISOString(),
@@ -33,3 +74,4 @@ export const DEMO_SCENARIO: AnalysisResult = {
     }
   ]
 };
+*/
