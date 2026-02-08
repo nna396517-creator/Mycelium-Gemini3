@@ -50,6 +50,13 @@ export default function AuthOverlay({ onLogin }: AuthOverlayProps) {
       {/* 1. 背景動畫 */}
       <ParticleBackground />
 
+      {/* 專案名稱 */}
+      <div className="absolute top-6 left-6 z-50">
+        <span className="text-blue-400 font-bold tracking-widest text-sm md:text-lg whitespace-nowrap">
+          MYCELIUM
+        </span>
+      </div>
+
       {/* 2. 語言切換按鈕 */}
       <div className="absolute top-6 right-6 z-50">
         <LanguageToggle />

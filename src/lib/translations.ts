@@ -5,7 +5,7 @@ export type Language = 'zh' | 'en';
 export const translations = {
   zh: {
     header: {
-        title: "Mycelium 菌絲體網絡",
+        title: "Mycelium",
         subtitle: "Gemini 3 分散式韌性系統 | 連線穩定",
         status: "系統連線中"
     },
@@ -60,7 +60,7 @@ export const translations = {
   },
   en: {
     header: {
-        title: "Mycelium Network",
+        title: "Mycelium",
         subtitle: "Gemini 3 Distributed Resilience | Stable",
         status: "SYSTEM ONLINE"
     },

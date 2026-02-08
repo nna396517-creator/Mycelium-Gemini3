@@ -191,7 +191,7 @@ export default function Home() {
       {/* 頂部狀態列 */}
       <div className="absolute top-0 left-0 right-0 z-20 p-2 md:p-3 flex justify-between items-center bg-black/60 backdrop-blur border-b border-white/10 transition-all">
         <div className="flex items-center gap-2 md:gap-4 px-2 md:px-4">
-            <span className="text-blue-400 font-bold tracking-widest text-sm md:text-lg whitespace-nowrap">MYCELIUM v3</span>
+            <span className="text-blue-400 font-bold tracking-widest text-sm md:text-lg whitespace-nowrap">MYCELIUM</span>
             <span className="hidden md:flex px-2 py-0.5 rounded bg-green-500/20 text-green-400 text-xs border border-green-500/30 items-center gap-1">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/> {t.header.status}
             </span>
