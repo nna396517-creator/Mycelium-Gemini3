@@ -4,7 +4,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Send, Upload, AlertTriangle, Trash2, Bot, Minus, ChevronUp, ChevronRight, ChevronLeft, AArrowUp, AArrowDown, MapPin, ClipboardList, Stethoscope } from 'lucide-react';
+import { 
+  Loader2, Send, Upload, AlertTriangle, Trash2, Bot, Minus, 
+  ChevronUp, ChevronRight, ChevronLeft, AArrowUp, AArrowDown, 
+  MapPin, ClipboardList, Stethoscope 
+} from 'lucide-react';
 import { Message, ReportingFormData } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/components/LanguageContext';
@@ -159,7 +163,6 @@ const ReportingForm = ({ onSubmit, t }: { onSubmit: (data: ReportingFormData) =>
                 <span className="font-bold text-zinc-300">{t.reporting.formTitle}</span>
             </div>
 
-            {/* 1. 地理位置 (必填) */}
             <div className="space-y-1">
                 <label className="text-xs text-zinc-400 block flex justify-between">
                     {t.reporting.location}
@@ -189,7 +192,6 @@ const ReportingForm = ({ onSubmit, t }: { onSubmit: (data: ReportingFormData) =>
                 </div>
             </div>
 
-            {/* 2. 受損項目 (必填) */}
             <div className="space-y-1">
                 <label className="text-xs text-zinc-400 block flex justify-between">
                     {t.reporting.damageItem}
@@ -209,7 +211,6 @@ const ReportingForm = ({ onSubmit, t }: { onSubmit: (data: ReportingFormData) =>
                 </select>
             </div>
 
-            {/* 3. 災害類型 (必填) */}
             <div className="space-y-1">
                 <label className="text-xs text-zinc-400 block flex justify-between">
                     {t.reporting.disasterType}
@@ -235,7 +236,6 @@ const ReportingForm = ({ onSubmit, t }: { onSubmit: (data: ReportingFormData) =>
                 </div>
             </div>
 
-            {/* 4. 補充說明 */}
             <div className="space-y-1">
                 <label className="text-xs text-zinc-400 block">{t.reporting.desc}</label>
                 <textarea 
@@ -245,7 +245,6 @@ const ReportingForm = ({ onSubmit, t }: { onSubmit: (data: ReportingFormData) =>
                 />
             </div>
 
-            {/* 5. 物資需求 */}
             <div className="space-y-1">
                 <label className="text-xs text-zinc-400 block">{t.reporting.needs}</label>
                 <input 
@@ -338,7 +337,6 @@ export default function CommandPanel({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       onUpload(e.target.files[0]);
-      // [修正] 重置 input 值，解決無法重複上傳同一張照片的問題
       e.target.value = '';
     }
   };
@@ -487,7 +485,7 @@ export default function CommandPanel({
 
                 <div className={cn(
                   "p-3 rounded-xl backdrop-blur-md border shadow-lg transition-all",
-                  FONT_SIZES[fontLevel], // 套用動態字體
+                  FONT_SIZES[fontLevel], 
                   msg.role === 'user' 
                     ? "bg-blue-950/40 border-blue-500/30 text-blue-100 rounded-tr-none shadow-[0_0_15px_rgba(59,130,246,0.1)]" 
                     : "bg-zinc-900/60 border-white/10 text-zinc-100 rounded-tl-none shadow-[0_0_15px_rgba(255,255,255,0.05)]"
@@ -498,7 +496,6 @@ export default function CommandPanel({
                   
                   <MarkdownRenderer content={msg.content} fontSizeClass={FONT_SIZES[fontLevel]} />
                   
-                  {/* 互動選擇按鈕 */}
                   {msg.interactive === 'choice' && (
                     <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/10">
                         <Button 
@@ -518,12 +515,10 @@ export default function CommandPanel({
                     </div>
                   )}
 
-                  {/* 表單 */}
                   {msg.interactive === 'form' && (
                     <ReportingForm onSubmit={onFormSubmit} t={t} />
                   )}
 
-                  {/* 表單提交成功 */}
                   {msg.interactive === 'form_submitted' && (
                     <div className="mt-2 p-2 bg-green-900/20 border border-green-500/30 rounded text-green-300 text-sm flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-green-500"></div>
@@ -574,7 +569,6 @@ export default function CommandPanel({
         {/* 底部輸入區 */}
         <div className="p-3 bg-black/60 border-t border-white/10 backdrop-blur-xl shrink-0 z-10 flex flex-col gap-2">
           
-          {/* 浮動建議按鈕列 */}
           <div className="relative group">
              
              {canScrollLeft && (
@@ -588,7 +582,6 @@ export default function CommandPanel({
                 </div>
              )}
 
-             {/* 建議列表容器 */}
              <div 
                ref={suggestionsScrollRef}
                onScroll={checkScroll} 

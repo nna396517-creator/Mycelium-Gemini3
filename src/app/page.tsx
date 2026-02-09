@@ -7,6 +7,7 @@ import CommandPanel from '@/components/CommandPanel';
 import AuthOverlay from '@/components/AuthOverlay';
 import WeatherCard from '@/components/WeatherCard';
 import AlertBanner from '@/components/AlertBanner'; 
+import MapLegend from '@/components/MapLegend';
 import { AnalysisResult, Message, ReportingFormData, EmergencyAlert } from '@/lib/types';
 import { SCENARIO_DATABASE, DEFAULT_SCENARIO } from '@/data/demoScenarios';
 import { Activity, Signal, Battery, Users, ChevronDown, ChevronUp } from 'lucide-react';
@@ -21,9 +22,9 @@ interface RiskDataPoint {
   reason: string;
 }
 
-// Haversine 公式：計算兩點經緯度之間的距離 (公里)
+// Haversine 公式
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371; // 地球半徑 (km)
+  const R = 6371; 
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -34,7 +35,6 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-// 帶有座標的模擬警報 (用於測試過濾功能)
 const MOCK_ALERTS: EmergencyAlert[] = [
   {
     id: 'mock-air-raid-taipei',
@@ -45,8 +45,8 @@ const MOCK_ALERTS: EmergencyAlert[] = [
     message: 'Missile threat detected in Northern Taiwan. Seek shelter immediately.',
     messageZh: '北部空域偵測到飛彈威脅。請立即進入避難所掩蔽。',
     timestamp: new Date().toISOString(),
-    location: { lat: 25.0330, lng: 121.5654 }, // 台北 101 附近
-    radiusKm: 50 // 影響範圍 50km
+    location: { lat: 25.0330, lng: 121.5654 }, 
+    radiusKm: 50 
   },
   {
     id: 'mock-quake-hualien',
@@ -57,8 +57,8 @@ const MOCK_ALERTS: EmergencyAlert[] = [
     message: 'M5.5 Quake detected off the coast of Hualien.',
     messageZh: '花蓮近海發生規模 5.5 地震。預估震度 4 級。',
     timestamp: new Date().toISOString(),
-    location: { lat: 23.9872, lng: 121.6011 }, // 花蓮
-    radiusKm: 150 // 地震影響範圍較大
+    location: { lat: 23.9872, lng: 121.6011 },
+    radiusKm: 150
   },
   {
     id: 'mock-typhoon-kaohsiung',
@@ -69,7 +69,7 @@ const MOCK_ALERTS: EmergencyAlert[] = [
     message: 'Typhoon eye making landfall near Kaohsiung.',
     messageZh: '颱風中心預計於高雄登陸，南部地區嚴加戒備。',
     timestamp: new Date().toISOString(),
-    location: { lat: 22.6273, lng: 120.3014 }, // 高雄
+    location: { lat: 22.6273, lng: 120.3014 },
     radiusKm: 100
   }
 ];
@@ -82,8 +82,6 @@ export default function Home() {
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [isRiskDetailsOpen, setIsRiskDetailsOpen] = useState(false);
   const [activeAlert, setActiveAlert] = useState<EmergencyAlert | null>(null);
-  
-  // [新增] 使用者位置狀態
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   
   const [pendingFileName, setPendingFileName] = useState<string | null>(null);
@@ -119,7 +117,6 @@ export default function Home() {
     }
   }, []);
 
-  // [新增] 取得使用者位置
   const getUserLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -128,11 +125,10 @@ export default function Home() {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
-          console.log("User located:", position.coords.latitude, position.coords.longitude);
         },
         (error) => {
-          console.error("Location access denied, defaulting to Taipei", error);
-          setUserLocation({ lat: 25.0330, lng: 121.5654 }); // 預設台北
+          console.error("Location error", error);
+          setUserLocation({ lat: 25.0330, lng: 121.5654 }); 
         }
       );
     } else {
@@ -140,35 +136,29 @@ export default function Home() {
     }
   };
 
-  // [新增] 登入後取得位置
   useEffect(() => {
     if (isLoggedIn) {
       getUserLocation();
     }
   }, [isLoggedIn]);
 
-  // [修改] 警報抓取與過濾邏輯
   const fetchAndFilterAlerts = async () => {
     if (!userLocation) return;
 
     try {
-      // 1. 抓取 USGS 真實地震
       const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson');
       const data = await res.json();
       
       let matchedAlert: EmergencyAlert | null = null;
 
-      // 檢查真實地震是否在附近
       if (data.features) {
         for (const quake of data.features) {
           const [lon, lat] = quake.geometry.coordinates;
           const mag = quake.properties.mag;
           const dist = calculateDistance(userLocation.lat, userLocation.lng, lat, lon);
           
-          // 如果地震發生在 300km 內 (有感範圍)，則顯示
           if (dist < 300) {
              const place = quake.properties.place;
-             const time = new Date(quake.properties.time).toLocaleTimeString();
              matchedAlert = {
               id: `usgs-${quake.id}`,
               type: 'EARTHQUAKE',
@@ -181,12 +171,11 @@ export default function Home() {
               location: { lat, lng: lon },
               radiusKm: 300
             };
-            break; // 找到最近的一個就停止
+            break;
           }
         }
       }
 
-      // 2. 如果沒有真實威脅，則檢查 Mock 資料庫
       if (!matchedAlert) {
         for (const alert of MOCK_ALERTS) {
           if (alert.location && alert.radiusKm) {
@@ -199,7 +188,6 @@ export default function Home() {
         }
       }
 
-      // 設定警報
       if (matchedAlert) {
         setActiveAlert(matchedAlert);
       }
@@ -209,10 +197,8 @@ export default function Home() {
     }
   };
 
-  // [修改] 定時檢查警報 (登入且有位置後)
   useEffect(() => {
     if (isLoggedIn && userLocation && !activeAlert) {
-      // 延遲 3 秒模擬掃描過程
       const timer = setTimeout(() => {
         fetchAndFilterAlerts();
       }, 3000);
@@ -220,65 +206,44 @@ export default function Home() {
     }
   }, [isLoggedIn, userLocation, activeAlert]);
 
-
   const getAIResponse = (input: string): string => {
     const text = input.toLowerCase();
-    
     if (text.includes("cpr") || text.includes("心肺復甦")) {
-      if (text.includes("how") || text.includes("step")) {
-        return "**🚑 CPR Steps:**\n\n1. **Check Safety**: Ensure environment is safe.\n2. **Check Responsiveness**: Tap shoulders and shout.\n3. **Call 911**: Get AED.\n4. **Compressions**: Push hard and fast in center of chest (100-120/min).\n5. **Airway**: Tilt head, lift chin.\n6. **Breaths**: Give 2 rescue breaths.\n\n*Continue until help arrives.*";
-      }
+      if (text.includes("how") || text.includes("step")) return "**🚑 CPR Steps:**\n\n1. **Check Safety**: Ensure environment is safe.\n2. **Check Responsiveness**: Tap shoulders and shout.\n3. **Call 911**: Get AED.\n4. **Compressions**: Push hard and fast in center of chest (100-120/min).\n5. **Airway**: Tilt head, lift chin.\n6. **Breaths**: Give 2 rescue breaths.\n\n*Continue until help arrives.*";
       return "**🚑 CPR 急救步驟指南：**\n\n1. **確認環境安全**：確保自己與患者不處於危險中。\n2. **叫**：拍打雙肩，確認患者意識。\n3. **叫**：指定旁人撥打 119 並取得 AED。\n4. **C (Compressions)**：胸外按壓，速率 100-120 下/分，深度 5-6 公分。\n5. **A (Airway)**：暢通呼吸道 (壓額抬下巴)。\n6. **B (Breathing)**：人工呼吸 (若不願意可持續按壓)。\n\n*持續操作直到醫護人員抵達。*";
     }
-    
     if (text.includes("滅火") || text.includes("火災") || text.includes("fire") || text.includes("extinguisher")) {
-      if (text.includes("fire") || text.includes("extinguisher")) {
-         return "**🔥 Fire Extinguisher (PASS):**\n\n1. **Pull** the pin.\n2. **Aim** at the base of fire.\n3. **Squeeze** the lever.\n4. **Sweep** side to side.\n\n*Warning: Evacuate if fire is larger than a wastebasket.*";
-      }
-      return "**🔥 滅火器操作口訣 (拉、瞄、壓、掃)：**\n\n1. **拉**：拉開安全插梢。\n2. **瞄**：握住噴管，瞄準火源底部。\n3. **壓**：用力壓下握把。\n4. **掃**：向火源底部左右掃射。\n\n*注意：若火勢超過腰部高度，請立即放棄滅火並逃生。*";
+        if (text.includes("fire") || text.includes("extinguisher")) return "**🔥 Fire Extinguisher (PASS):**\n\n1. **Pull** the pin.\n2. **Aim** at the base of fire.\n3. **Squeeze** the lever.\n4. **Sweep** side to side.\n\n*Warning: Evacuate if fire is larger than a wastebasket.*";
+        return "**🔥 滅火器操作口訣 (拉、瞄、壓、掃)：**\n\n1. **拉**：拉開安全插梢。\n2. **瞄**：握住噴管，瞄準火源底部。\n3. **壓**：用力壓下握把。\n4. **掃**：向火源底部左右掃射。\n\n*注意：若火勢超過腰部高度，請立即放棄滅火並逃生。*";
     }
-    
     if (text.includes("地震") || text.includes("躲") || text.includes("earthquake") || text.includes("shake")) {
-      if (text.includes("earthquake")) {
-        return "**🏚️ Earthquake Safety (Drop, Cover, Hold on):**\n\n1. **Drop** to your hands and knees.\n2. **Cover** your head and neck under a sturdy table.\n3. **Hold on** until shaking stops.\n\n*Do not run outside during shaking.*";
-      }
-      return "**🏚️ 地震避難三步驟 (DCH)：**\n\n1. **趴下 (Drop)**：降低重心，避免跌倒。\n2. **掩護 (Cover)**：躲在堅固桌下，保護頭部頸部。\n3. **穩住 (Hold on)**：抓住桌腳，隨桌子移動。\n\n*切記：不要急著衝出門外，注意掉落物。*";
+        if (text.includes("earthquake")) return "**🏚️ Earthquake Safety (Drop, Cover, Hold on):**\n\n1. **Drop** to your hands and knees.\n2. **Cover** your head and neck under a sturdy table.\n3. **Hold on** until shaking stops.\n\n*Do not run outside during shaking.*";
+        return "**🏚️ 地震避難三步驟 (DCH)：**\n\n1. **趴下 (Drop)**：降低重心，避免跌倒。\n2. **掩護 (Cover)**：躲在堅固桌下，保護頭部頸部。\n3. **穩住 (Hold on)**：抓住桌腳，隨桌子移動。\n\n*切記：不要急著衝出門外，注意掉落物。*";
     }
-    
     if (text.includes("水災") || text.includes("淹水") || text.includes("flood") || text.includes("water")) {
-      if (text.includes("flood") || text.includes("water")) {
-        return "**🌊 Flood Response:**\n\n1. Move to higher ground immediately.\n2. Turn off utilities (gas/power) to prevent fires.\n3. Do not walk or drive through floodwaters.\n4. Prepare emergency kit.";
-      }
-      return "**🌊 水災應變措施：**\n\n1. 迅速往高處移動 (二樓以上)。\n2. 關閉瓦斯與電源總開關，避免觸電或氣爆。\n3. 準備三日份乾糧與飲用水。\n4. 若受困車內且水淹過輪胎，應立即棄車逃生。";
+        if (text.includes("flood") || text.includes("water")) return "**🌊 Flood Response:**\n\n1. Move to higher ground immediately.\n2. Turn off utilities (gas/power) to prevent fires.\n3. Do not walk or drive through floodwaters.\n4. Prepare emergency kit.";
+        return "**🌊 水災應變措施：**\n\n1. 迅速往高處移動 (二樓以上)。\n2. 關閉瓦斯與電源總開關，避免觸電或氣爆。\n3. 準備三日份乾糧與飲用水。\n4. 若受困車內且水淹過輪胎，應立即棄車逃生。";
     }
-    
     if (text.includes("避難包") || text.includes("kit") || text.includes("supplies")) {
-      if (text.includes("kit") || text.includes("supplies")) {
-        return "**🎒 Emergency Kit Checklist:**\n\n1. **Water & Food**: 3-day supply (non-perishable).\n2. **First Aid**: Bandages, antiseptics, meds.\n3. **Tools**: Flashlight (extra batteries), whistle, multi-tool.\n4. **Documents**: ID copies, cash, map.\n5. **Warmth**: Blanket, rain poncho.";
-      }
-      return "**🎒 緊急避難包建議清單：**\n\n1. **水與食物**：每人 3 公升水、能量棒、罐頭。\n2. **保暖與衣物**：輕便雨衣、暖暖包、替換衣物。\n3. **醫療用品**：急救箱、個人藥品。\n4. **工具**：手電筒 (含電池)、哨子、瑞士刀、行動電源。\n5. **證件**：身分證影本、現金。";
+        if (text.includes("kit") || text.includes("supplies")) return "**🎒 Emergency Kit Checklist:**\n\n1. **Water & Food**: 3-day supply (non-perishable).\n2. **First Aid**: Bandages, antiseptics, meds.\n3. **Tools**: Flashlight (extra batteries), whistle, multi-tool.\n4. **Documents**: ID copies, cash, map.\n5. **Warmth**: Blanket, rain poncho.";
+        return "**🎒 緊急避難包建議清單：**\n\n1. **水與食物**：每人 3 公升水、能量棒、罐頭。\n2. **保暖與衣物**：輕便雨衣、暖暖包、替換衣物。\n3. **醫療用品**：急救箱、個人藥品。\n4. **工具**：手電筒 (含電池)、哨子、瑞士刀、行動電源。\n5. **證件**：身分證影本、現金。";
     }
-
     return `Command received: "${input}"\nSystem is updating parameters based on your input. Monitoring active sectors.`;
   };
 
   const selectScenario = (fileName: string): AnalysisResult | null => {
     const name = fileName.toLowerCase();
-    
     if (name.includes('fire')) return SCENARIO_DATABASE['fire'];
     if (name.includes('crack')) return SCENARIO_DATABASE['crack']; 
     if (name.includes('collapse') || name.includes('earthquake')) return SCENARIO_DATABASE['earthquake'];
     if (name.includes('flood')) return SCENARIO_DATABASE['flood'];
     if (name.includes('rescue') || name.includes('volunteer')) return SCENARIO_DATABASE['rescue'];
-    
     if (name.includes('disaster')) return SCENARIO_DATABASE['fire'];
-
     return null;
   };
 
   const handleUpload = async (file: File) => {
     setPendingFileName(file.name);
-
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -288,7 +253,6 @@ export default function Home() {
     setMessages(prev => [...prev, userMsg]);
     setIsAnalyzing(true);
     setIsPanelMinimized(false);
-
     setTimeout(() => {
         setIsAnalyzing(false);
         const choiceMsg: Message = {
@@ -302,7 +266,6 @@ export default function Home() {
   };
 
   const handleChoiceSelect = (choice: 'report' | 'consult') => {
-      
       const userText = choice === 'report' ? t.reporting.btnReport : t.reporting.btnConsult;
       const userMsg: Message = {
          id: Date.now().toString(),
@@ -316,15 +279,12 @@ export default function Home() {
           setTimeout(() => {
               setIsAnalyzing(false);
               const matchedScenario = pendingFileName ? selectScenario(pendingFileName) : null;
-
               if (matchedScenario) {
                 setCurrentScenario(matchedScenario);
-                
                 let newScore = 50;
                 if (matchedScenario.riskLevel === 'CRITICAL') newScore = 95;
                 else if (matchedScenario.riskLevel === 'HIGH') newScore = 85;
                 else if (matchedScenario.riskLevel === 'MODERATE') newScore = 60;
-
                 setRiskHistory(prev => {
                   const newPoint: RiskDataPoint = {
                       score: newScore, 
@@ -334,11 +294,7 @@ export default function Home() {
                   const newHistory = [...prev, newPoint];
                   return newHistory.slice(-10);
                 });
-
-                const summary = language === 'zh' 
-                  ? matchedScenario.situationSummaryZh 
-                  : matchedScenario.situationSummary;
-
+                const summary = language === 'zh' ? matchedScenario.situationSummaryZh : matchedScenario.situationSummary;
                 const aiMsg: Message = {
                   id: Date.now().toString(),
                   role: 'assistant',
@@ -346,12 +302,10 @@ export default function Home() {
                   analysis: matchedScenario
                 };
                 setMessages(prev => [...prev, aiMsg]);
-              
               } else {
                 const warning = language === 'zh'
                   ? "⚠️ **影像關聯性警示**\n\n分析顯示此影像未包含可識別的災害特徵（火災、淹水、倒塌）。\n\n系統維持 **待命 (STANDBY)** 狀態。"
                   : "⚠️ **Image Relevance Alert**\n\nAnalysis indicates this image does not contain recognizable disaster patterns (Fire, Flood, Collapse).\n\nSystem maintains **STANDBY** status.";
-
                 const aiMsg: Message = {
                   id: Date.now().toString(),
                   role: 'assistant',
@@ -360,7 +314,6 @@ export default function Home() {
                 setMessages(prev => [...prev, aiMsg]);
               }
           }, 1500);
-
       } else {
           const formMsg: Message = {
               id: Date.now().toString(),
@@ -378,7 +331,6 @@ export default function Home() {
             ? { ...msg, interactive: 'form_submitted' as any, formData: data }
             : msg
       ));
-
       setTimeout(() => {
           const successMsg: Message = {
               id: Date.now().toString(),
@@ -397,13 +349,10 @@ export default function Home() {
     };
     setMessages(prev => [...prev, userMsg]);
     setIsPanelMinimized(false);
-
     setIsAnalyzing(true);
     setTimeout(() => {
       setIsAnalyzing(false);
-      
       const responseText = getAIResponse(text);
-      
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -413,13 +362,8 @@ export default function Home() {
     }, 1500);
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-  };
-
-  const handleClearHistory = () => {
-    setMessages([]);
-  };
+  const handleLogout = () => setIsLoggedIn(false);
+  const handleClearHistory = () => setMessages([]);
 
   return (
     <main className="relative w-full h-[100dvh] overflow-hidden bg-zinc-950 text-white font-mono selection:bg-blue-500/30">
@@ -428,21 +372,17 @@ export default function Home() {
         <AuthOverlay onLogin={() => setIsLoggedIn(true)} />
       )}
 
-      {/* 警報橫幅 (在登入後顯示) */}
       {isLoggedIn && (
         <AlertBanner alert={activeAlert} onClose={() => setActiveAlert(null)} />
       )}
 
-      {/* 底層：地圖 */}
       <div className="absolute inset-0 z-0">
-        <MapCanvas scenario={currentScenario} />
+        <MapCanvas scenario={currentScenario} userLocation={userLocation} />
       </div>
 
-      {/* 視覺特效層 */}
       <div className="absolute inset-0 z-0 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
       <div className="absolute inset-0 z-0 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.9)]"></div>
       
-      {/* 頂部狀態列 */}
       <div className="absolute top-0 left-0 right-0 z-20 p-2 md:p-3 flex justify-between items-center bg-black/60 backdrop-blur border-b border-white/10 transition-all">
         <div className="flex items-center gap-2 md:gap-4 px-2 md:px-4">
             <span className="text-blue-400 font-bold tracking-widest text-sm md:text-lg whitespace-nowrap">MYCELIUM</span>
@@ -470,19 +410,29 @@ export default function Home() {
 
       {isLoggedIn && (
         <>
-          {/* 左側指揮面板 */}
+          {/* 左側面板容器 */}
           <div 
             className={cn(
-              "fixed left-0 w-full z-30 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] flex flex-col",
-              "bottom-0", 
-              isPanelMinimized ? "h-[60px]" : "h-[45dvh]",
-              "md:left-4 md:w-[400px] md:top-16 md:bottom-auto",
-              isPanelMinimized 
-                ? "md:h-[60px]" 
-                : "md:h-[80vh]"
+              "fixed z-30 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] flex flex-col pointer-events-none", // 加入 pointer-events-none 避免空白區域擋到地圖
+              // Mobile
+              "left-0 bottom-0 w-full",
+              // Desktop
+              "md:left-4 md:top-16 md:bottom-auto md:w-[400px]"
             )}
           >
-            <div className="flex-1 overflow-hidden h-full">
+            {/* 圖例卡片 */}
+            <div className="pointer-events-auto">
+                <MapLegend />
+            </div>
+
+            {/* 聊天面板容器 */}
+            <div className={cn(
+                "w-full transition-all duration-500 ease-in-out pointer-events-auto", // 恢復點擊事件
+                // Mobile Height
+                isPanelMinimized ? "h-[60px]" : "h-[45dvh]",
+                // Desktop Height
+                isPanelMinimized ? "md:h-[60px]" : "md:h-[70vh]"
+            )}>
               <CommandPanel 
                 messages={messages} 
                 isAnalyzing={isAnalyzing} 
@@ -502,8 +452,7 @@ export default function Home() {
             
               <WeatherCard scenario={currentScenario} />
 
-              {/* LOCAL RISK INDEX 卡片 */}
-            <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 transition-all duration-300">
+              <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
                     <h3 className="text-zinc-400 text-xs flex items-center gap-2">
                         <Activity size={14} className="text-red-500"/> {t.stats.risk}
@@ -542,9 +491,8 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* SVG 折線趨勢圖 */}
+                {/* Risk Index Chart SVG */}
                 <div className="relative h-24 w-full mb-1 group" onMouseLeave={() => setHoveredPoint(null)}>
-                    
                     {tooltipPos !== null && hoveredPoint && (
                         <div 
                             className="absolute z-20 top-[-40px] -translate-x-1/2 bg-black/90 border border-blue-500/30 text-white text-[10px] p-2 rounded shadow-[0_0_10px_rgba(59,130,246,0.5)] whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-200"
@@ -639,7 +587,6 @@ export default function Home() {
                 </div>
             </div>
             
-            {/* RESOURCES 卡片 */}
             <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 space-y-4">
                 <h3 className="text-zinc-400 text-xs flex items-center gap-2">
                     <Users size={14} className="text-blue-500"/> {t.stats.resources}

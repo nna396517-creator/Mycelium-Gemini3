@@ -10,13 +10,23 @@ export const translations = {
         status: "系統連線中"
     },
     stats: {
-        latency: "延遲",
+        latency: "網速延遲",
         risk: "區域風險指數",
         calcWeights: "計算權重",
         resources: "分散式資源節點 (AVAILABLE)",
         medic: "醫療救援組 (Medic)",
         supply: "物資補給 (Supply)",
         heavy: "重型機具 (Heavy)"
+    },
+    // 地圖圖例翻譯
+    legend: {
+      title: "圖例說明",
+      user: "當前位置",
+      aed: "AED 急救點",
+      hospital: "急救醫院",
+      shelter: "避難收容所",
+      bunker: "防空避難處",
+      task: "救援任務"
     },
     // 警報翻譯
     alerts: {
@@ -38,7 +48,7 @@ export const translations = {
         conditions: {
             sunny: "烈日 / 高溫",
             cloudy: "多雲 / 陰",
-            rainy: "豪大雨特報",
+            rainy: "豪雨特報",
             storm: "雷雨交加",
             clear: "晴朗"
         }
@@ -138,6 +148,16 @@ export const translations = {
         medic: "Medical Units",
         supply: "Supply Units",
         heavy: "Heavy Machinery"
+    },
+    // Legend translation
+    legend: {
+      title: "Map Legend",
+      user: "Current Loc",
+      aed: "AED",
+      hospital: "Hospital",
+      shelter: "Shelter",
+      bunker: "Air Raid",
+      task: "Mission"
     },
     // Alert translations
     alerts: {
