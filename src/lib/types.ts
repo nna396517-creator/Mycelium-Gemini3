@@ -16,11 +16,11 @@ export type TaskRole = 'MEDIC' | 'RESCUER' | 'SUPPLY' | 'COMMANDER';
 // 具體任務內容
 export interface Task {
   id: string;
-  role: TaskRole;
+  role: 'RESCUER' | 'MEDIC' | 'SUPPLY' | 'HEAVY';
   description: string;
-  priority: number; // 1 (最高) - 5 (最低)
-  targetLocation: Location;
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  status: 'pending' | 'active' | 'completed';
+  coordinates?: Location;
 }
 
 // 定義三個維度的評分因子
@@ -32,20 +32,35 @@ export interface RiskFactors {
 
 // Gemini 分析後的完整結果
 export interface AnalysisResult {
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  riskScore: number;        // 最終加權分數 (0-100)
-  riskFactors: RiskFactors; // 詳細評分
-  situationSummary: string;
+  riskLevel: 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW' | 'STANDBY' | 'ANALYZING'
+  confidence: number;
+  timestamp: string;
+  location: Location;
+  situationSummary: string;   // 英文版摘要
+  situationSummaryZh: string; // 中文版摘要
+  riskFactors: RiskFactors;
   suggestedTasks: Task[];
-  coordinates: { lat: number; lng: number };
+}
+
+// [新增] 表單資料結構
+export interface ReportingFormData {
+  location?: { lat: number, lng: number };
+  damageItem?: string;
+  disasterType?: string;
+  description?: string;
+  needs?: string;
 }
 
 // 聊天視窗用的訊息格式
 export interface Message {
   id: string;
-  role: 'user' | 'system' | 'assistant';
+  role: 'user' | 'assistant';
   content: string;
   attachmentUrl?: string; // 圖片的 URL
-  analysis?: AnalysisResult; // 如果這則訊息是 AI 分析結果，會帶有此欄位
-  isThinking?: boolean; // UI 顯示 loading 狀態用
+  analysis?: AnalysisResult; // AI 分析結果
+  
+  // [新增] 互動模式屬性
+  interactive?: 'choice' | 'form' | 'form_submitted'; 
+  // 用於暫存該則訊息的表單狀態 (僅前端顯示用)
+  formData?: ReportingFormData;
 }

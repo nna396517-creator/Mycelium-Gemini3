@@ -5,15 +5,14 @@ import { useState, useEffect } from 'react';
 import MapCanvas from '@/components/MapCanvas';
 import CommandPanel from '@/components/CommandPanel';
 import AuthOverlay from '@/components/AuthOverlay';
-import { AnalysisResult, Message } from '@/lib/types';
-import { DEMO_SCENARIO } from '@/data/mockScenarios';
+import { AnalysisResult, Message, ReportingFormData } from '@/lib/types';
+import { SCENARIO_DATABASE, DEFAULT_SCENARIO } from '@/data/demoScenarios';
 import { Activity, Signal, Battery, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
 import LanguageToggle from '@/components/LanguageToggle';
 import UserProfile from '@/components/UserProfile';
 import { cn } from '@/lib/utils';
 
-// 定義圖表數據點的結構
 interface RiskDataPoint {
   score: number;
   time: string;
@@ -27,9 +26,14 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [isRiskDetailsOpen, setIsRiskDetailsOpen] = useState(false);
-  const { t } = useLanguage(); 
+  
+  // 暫存上傳的檔案名稱，用於後續分析選擇劇本
+  const [pendingFileName, setPendingFileName] = useState<string | null>(null);
 
-  // 升級 riskHistory 的資料結構，加入時間與事件
+  // [修正] 強制轉型 t 為 any
+  const { t: rawT, language } = useLanguage(); 
+  const t = rawT as any;
+
   const [riskHistory, setRiskHistory] = useState<RiskDataPoint[]>([
     { score: 20, time: "09:00", reason: "patrol" },
     { score: 30, time: "09:15", reason: "vibration" },
@@ -43,12 +47,9 @@ export default function Home() {
     { score: 65, time: "11:15", reason: "gas" },
   ]);
 
-  // 記錄目前滑鼠指到的資料點
   const [hoveredPoint, setHoveredPoint] = useState<RiskDataPoint | null>(null);
-  // 記錄 tooltip 的位置 (X 座標百分比)
   const [tooltipPos, setTooltipPos] = useState<number>(0);
 
-  // 真實電量偵測
   const [batteryLevel, setBatteryLevel] = useState<number>(100);
   useEffect(() => {
     if ('getBattery' in navigator) {
@@ -61,20 +62,16 @@ export default function Home() {
     }
   }, []);
 
-  // 模擬 AI 對防災知識的專業回應 (支援雙語)
   const getAIResponse = (input: string): string => {
     const text = input.toLowerCase();
     
-    // 1. CPR
     if (text.includes("cpr") || text.includes("心肺復甦")) {
-      // 判斷是否為英文提問 (簡單判斷)
       if (text.includes("how") || text.includes("step")) {
         return "**🚑 CPR Steps:**\n\n1. **Check Safety**: Ensure environment is safe.\n2. **Check Responsiveness**: Tap shoulders and shout.\n3. **Call 911**: Get AED.\n4. **Compressions**: Push hard and fast in center of chest (100-120/min).\n5. **Airway**: Tilt head, lift chin.\n6. **Breaths**: Give 2 rescue breaths.\n\n*Continue until help arrives.*";
       }
       return "**🚑 CPR 急救步驟指南：**\n\n1. **確認環境安全**：確保自己與患者不處於危險中。\n2. **叫**：拍打雙肩，確認患者意識。\n3. **叫**：指定旁人撥打 119 並取得 AED。\n4. **C (Compressions)**：胸外按壓，速率 100-120 下/分，深度 5-6 公分。\n5. **A (Airway)**：暢通呼吸道 (壓額抬下巴)。\n6. **B (Breathing)**：人工呼吸 (若不願意可持續按壓)。\n\n*持續操作直到醫護人員抵達。*";
     }
     
-    // 2. 滅火器 (Fire)
     if (text.includes("滅火") || text.includes("火災") || text.includes("fire") || text.includes("extinguisher")) {
       if (text.includes("fire") || text.includes("extinguisher")) {
          return "**🔥 Fire Extinguisher (PASS):**\n\n1. **Pull** the pin.\n2. **Aim** at the base of fire.\n3. **Squeeze** the lever.\n4. **Sweep** side to side.\n\n*Warning: Evacuate if fire is larger than a wastebasket.*";
@@ -82,7 +79,6 @@ export default function Home() {
       return "**🔥 滅火器操作口訣 (拉、瞄、壓、掃)：**\n\n1. **拉**：拉開安全插梢。\n2. **瞄**：握住噴管，瞄準火源底部。\n3. **壓**：用力壓下握把。\n4. **掃**：向火源底部左右掃射。\n\n*注意：若火勢超過腰部高度，請立即放棄滅火並逃生。*";
     }
     
-    // 3. 地震 (Earthquake)
     if (text.includes("地震") || text.includes("躲") || text.includes("earthquake") || text.includes("shake")) {
       if (text.includes("earthquake")) {
         return "**🏚️ Earthquake Safety (Drop, Cover, Hold on):**\n\n1. **Drop** to your hands and knees.\n2. **Cover** your head and neck under a sturdy table.\n3. **Hold on** until shaking stops.\n\n*Do not run outside during shaking.*";
@@ -90,7 +86,6 @@ export default function Home() {
       return "**🏚️ 地震避難三步驟 (DCH)：**\n\n1. **趴下 (Drop)**：降低重心，避免跌倒。\n2. **掩護 (Cover)**：躲在堅固桌下，保護頭部頸部。\n3. **穩住 (Hold on)**：抓住桌腳，隨桌子移動。\n\n*切記：不要急著衝出門外，注意掉落物。*";
     }
     
-    // 4. 水災 (Flood)
     if (text.includes("水災") || text.includes("淹水") || text.includes("flood") || text.includes("water")) {
       if (text.includes("flood") || text.includes("water")) {
         return "**🌊 Flood Response:**\n\n1. Move to higher ground immediately.\n2. Turn off utilities (gas/power) to prevent fires.\n3. Do not walk or drive through floodwaters.\n4. Prepare emergency kit.";
@@ -98,7 +93,6 @@ export default function Home() {
       return "**🌊 水災應變措施：**\n\n1. 迅速往高處移動 (二樓以上)。\n2. 關閉瓦斯與電源總開關，避免觸電或氣爆。\n3. 準備三日份乾糧與飲用水。\n4. 若受困車內且水淹過輪胎，應立即棄車逃生。";
     }
     
-    // 5. 避難包 (Kit)
     if (text.includes("避難包") || text.includes("kit") || text.includes("supplies")) {
       if (text.includes("kit") || text.includes("supplies")) {
         return "**🎒 Emergency Kit Checklist:**\n\n1. **Water & Food**: 3-day supply (non-perishable).\n2. **First Aid**: Bandages, antiseptics, meds.\n3. **Tools**: Flashlight (extra batteries), whistle, multi-tool.\n4. **Documents**: ID copies, cash, map.\n5. **Warmth**: Blanket, rain poncho.";
@@ -109,61 +103,133 @@ export default function Home() {
     return `Command received: "${input}"\nSystem is updating parameters based on your input. Monitoring active sectors.`;
   };
 
+  const selectScenario = (fileName: string): AnalysisResult | null => {
+    const name = fileName.toLowerCase();
+    
+    if (name.includes('fire')) return SCENARIO_DATABASE['fire'];
+    if (name.includes('crack')) return SCENARIO_DATABASE['crack']; 
+    if (name.includes('collapse') || name.includes('earthquake')) return SCENARIO_DATABASE['earthquake'];
+    if (name.includes('flood')) return SCENARIO_DATABASE['flood'];
+    if (name.includes('rescue') || name.includes('volunteer')) return SCENARIO_DATABASE['rescue'];
+    
+    if (name.includes('disaster')) return SCENARIO_DATABASE['fire'];
+
+    return null;
+  };
+
   const handleUpload = async (file: File) => {
+    setPendingFileName(file.name);
+
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: t.chat.userPrompt,
+      content: t.chat.upload, 
       attachmentUrl: URL.createObjectURL(file)
     };
     setMessages(prev => [...prev, userMsg]);
     setIsAnalyzing(true);
     setIsPanelMinimized(false);
 
-    // 模擬圖片內容判斷
-    // 在真實場景中，這裡會呼叫後端 Gemini API
-    // 這裡我們用隨機數來模擬「災情照片」vs「無關照片」
-    // 為了 Demo 順暢，我們設定 80% 機率是災情照片，20% 機率是無關照片
-    // 或者你可以根據檔名來測試：如果檔名包含 "cat" 或 "food" 就當作無關照片
-
-    const isRelevantImage = !file.name.toLowerCase().includes("cat") && !file.name.toLowerCase().includes("food");
-    
     setTimeout(() => {
-      setIsAnalyzing(false);
-
-      if (isRelevantImage) {
-        // [情況 A] 判斷為災情照片 -> 進入分析模式
-        setCurrentScenario(DEMO_SCENARIO);
-        
-        setRiskHistory(prev => {
-          const newPoint: RiskDataPoint = {
-              score: 89, 
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              reason: "critical" 
-          };
-          const newHistory = [...prev, newPoint];
-          return newHistory.slice(-10);
-        });
-
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: DEMO_SCENARIO.situationSummary, // 顯示災情分析
-          analysis: DEMO_SCENARIO
+        setIsAnalyzing(false);
+        const choiceMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: t.reporting.choiceTitle,
+            interactive: 'choice'
         };
-        setMessages(prev => [...prev, aiMsg]);
+        setMessages(prev => [...prev, choiceMsg]);
+    }, 1500);
+  };
+
+  // [修正] 處理點擊選擇後的邏輯：先幫使用者發送訊息，再觸發 AI
+  const handleChoiceSelect = (choice: 'report' | 'consult') => {
       
-      } else {
-        // [情況 B] 判斷為無關照片 -> 提示使用者
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: "⚠️ **Image Relevance Alert**\n\nAnalysis indicates this image does not contain disaster-related content (e.g., structural damage, fire, or hazards).\n\nPlease upload imagery of the affected area to initiate the Mycelium rescue protocol."
-        };
-        setMessages(prev => [...prev, aiMsg]);
-      }
+      // 1. 自動幫使用者發送一則對應的訊息
+      const userText = choice === 'report' ? t.reporting.btnReport : t.reporting.btnConsult;
+      const userMsg: Message = {
+         id: Date.now().toString(),
+         role: 'user',
+         content: userText
+      };
+      setMessages(prev => [...prev, userMsg]);
 
-    }, 3000);
+      if (choice === 'consult') {
+          setIsAnalyzing(true);
+          setTimeout(() => {
+              setIsAnalyzing(false);
+              const matchedScenario = pendingFileName ? selectScenario(pendingFileName) : null;
+
+              if (matchedScenario) {
+                setCurrentScenario(matchedScenario);
+                
+                let newScore = 50;
+                if (matchedScenario.riskLevel === 'CRITICAL') newScore = 95;
+                else if (matchedScenario.riskLevel === 'HIGH') newScore = 85;
+                else if (matchedScenario.riskLevel === 'MODERATE') newScore = 60;
+
+                setRiskHistory(prev => {
+                  const newPoint: RiskDataPoint = {
+                      score: newScore, 
+                      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                      reason: matchedScenario.riskLevel.toLowerCase()
+                  };
+                  const newHistory = [...prev, newPoint];
+                  return newHistory.slice(-10);
+                });
+
+                const summary = language === 'zh' 
+                  ? matchedScenario.situationSummaryZh 
+                  : matchedScenario.situationSummary;
+
+                const aiMsg: Message = {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: summary, 
+                  analysis: matchedScenario
+                };
+                setMessages(prev => [...prev, aiMsg]);
+              
+              } else {
+                const warning = language === 'zh'
+                  ? "⚠️ **影像關聯性警示**\n\n分析顯示此影像未包含可識別的災害特徵（火災、淹水、倒塌）。\n\n系統維持 **待命 (STANDBY)** 狀態。"
+                  : "⚠️ **Image Relevance Alert**\n\nAnalysis indicates this image does not contain recognizable disaster patterns (Fire, Flood, Collapse).\n\nSystem maintains **STANDBY** status.";
+
+                const aiMsg: Message = {
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: warning
+                };
+                setMessages(prev => [...prev, aiMsg]);
+              }
+          }, 1500);
+
+      } else {
+          const formMsg: Message = {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: t.reporting.formTitle,
+              interactive: 'form'
+          };
+          setMessages(prev => [...prev, formMsg]);
+      }
+  };
+
+  const handleFormSubmit = (data: ReportingFormData) => {
+      setMessages(prev => prev.map(msg => 
+          msg.interactive === 'form' 
+            ? { ...msg, interactive: 'form_submitted' as any, formData: data }
+            : msg
+      ));
+
+      setTimeout(() => {
+          const successMsg: Message = {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: t.reporting.aiFollowUp 
+          };
+          setMessages(prev => [...prev, successMsg]);
+      }, 500);
   };
 
   const handleSendMessage = (text: string) => {
@@ -179,7 +245,6 @@ export default function Home() {
     setTimeout(() => {
       setIsAnalyzing(false);
       
-      // 呼叫新的 AI 回應邏輯
       const responseText = getAIResponse(text);
       
       const aiMsg: Message = {
@@ -262,6 +327,8 @@ export default function Home() {
                 onUpload={handleUpload} 
                 onClear={handleClearHistory}
                 onSendMessage={handleSendMessage}
+                onChoiceSelect={handleChoiceSelect} // [新增]
+                onFormSubmit={handleFormSubmit}     // [新增]
                 isMinimized={isPanelMinimized}
                 onToggleMinimize={() => setIsPanelMinimized(!isPanelMinimized)}
               />
@@ -314,8 +381,7 @@ export default function Home() {
                 {/* SVG 折線趨勢圖 */}
                 <div className="relative h-24 w-full mb-1 group" onMouseLeave={() => setHoveredPoint(null)}>
                     
-                    {/* Tooltip 資訊框 */}
-                    {hoveredPoint && (
+                    {tooltipPos !== null && hoveredPoint && (
                         <div 
                             className="absolute z-20 top-[-40px] -translate-x-1/2 bg-black/90 border border-blue-500/30 text-white text-[10px] p-2 rounded shadow-[0_0_10px_rgba(59,130,246,0.5)] whitespace-nowrap pointer-events-none animate-in fade-in zoom-in-95 duration-200"
                             style={{ left: `${tooltipPos}%` }}
@@ -366,7 +432,6 @@ export default function Home() {
                             className="transition-all duration-500 ease-in-out drop-shadow-[0_0_4px_rgba(59,130,246,0.8)]"
                         />
 
-                        {/* 互動節點 (透明感應區 + 懸浮效果) */}
                         {riskHistory.map((pt, i) => {
                             const x = (i / (riskHistory.length - 1)) * 100;
                             const y = 100 - pt.score;
@@ -375,7 +440,6 @@ export default function Home() {
 
                             return (
                                 <g key={i}>
-                                    {/* 透明的大圓圈，用來增加滑鼠感應範圍 */}
                                     <circle 
                                         cx={x} cy={y} r="8" 
                                         fill="transparent" 
@@ -385,7 +449,6 @@ export default function Home() {
                                             setTooltipPos(x);
                                         }}
                                     />
-                                    {/* 視覺上的小圓點 */}
                                     <circle 
                                         cx={x} cy={y} r={isHovered ? 4 : (isLast ? 3 : 2)}
                                         className={cn(
@@ -405,7 +468,6 @@ export default function Home() {
                     </span>
                     <div className="text-right">
                         <div className="text-[10px] text-zinc-500 mb-[-2px]">CURRENT</div>
-                        {/* 這裡要存取 .score */}
                         <span className="text-2xl font-bold text-red-500">
                             {riskHistory[riskHistory.length - 1].score}%
                         </span>

@@ -4,12 +4,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Send, Upload, AlertTriangle, Trash2, Bot, Minus, ChevronUp, ChevronRight, ChevronLeft, AArrowUp, AArrowDown } from 'lucide-react';
-import { Message } from '@/lib/types';
+import { Loader2, Send, Upload, AlertTriangle, Trash2, Bot, Minus, ChevronUp, ChevronRight, ChevronLeft, AArrowUp, AArrowDown, MapPin, ClipboardList, Stethoscope } from 'lucide-react';
+import { Message, ReportingFormData } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/components/LanguageContext';
 
-// 字體大小設定檔
 const FONT_SIZES = [
   "text-xs md:text-sm", 
   "text-sm md:text-base", 
@@ -111,12 +110,175 @@ const MarkdownRenderer = ({ content, fontSizeClass }: { content: string, fontSiz
   );
 };
 
+// 內部表單元件
+const ReportingForm = ({ onSubmit, t }: { onSubmit: (data: ReportingFormData) => void, t: any }) => {
+    const [formData, setFormData] = useState<ReportingFormData>({
+        damageItem: 'residential',
+        disasterType: 'fire',
+        description: '',
+        needs: ''
+    });
+    const [locating, setLocating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleGetLocation = () => {
+        setLocating(true);
+        setError(null);
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                setFormData(prev => ({
+                    ...prev,
+                    location: {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    }
+                }));
+                setLocating(false);
+            }, (error) => {
+                console.error("Error getting location", error);
+                setLocating(false);
+                setFormData(prev => ({ ...prev, location: { lat: 25.0330, lng: 121.5654 } }));
+            });
+        } else {
+            setLocating(false);
+        }
+    };
+
+    const handleSubmit = () => {
+        if (!formData.location) {
+            setError(t.reporting.errorLocation);
+            return;
+        }
+        onSubmit(formData);
+    };
+
+    return (
+        <div className="bg-black/40 border border-white/10 rounded-lg p-3 space-y-3 mt-2 text-sm animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex items-center gap-2 border-b border-white/10 pb-2 mb-2">
+                <ClipboardList size={16} className="text-yellow-400"/>
+                <span className="font-bold text-zinc-300">{t.reporting.formTitle}</span>
+            </div>
+
+            {/* 1. 地理位置 (必填) */}
+            <div className="space-y-1">
+                <label className="text-xs text-zinc-400 block flex justify-between">
+                    {t.reporting.location}
+                    <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                    <div className={cn(
+                        "flex-1 border rounded px-2 py-1.5 text-zinc-300 font-mono text-xs flex items-center transition-colors",
+                        formData.location ? "bg-zinc-900/50 border-green-500/30 text-green-400" : "bg-zinc-900/50 border-white/10"
+                    )}>
+                        {formData.location 
+                            ? `${formData.location.lat.toFixed(4)}, ${formData.location.lng.toFixed(4)}` 
+                            : <span className="text-zinc-600">Waiting for GPS...</span>}
+                    </div>
+                    <Button 
+                        size="sm" variant="outline" 
+                        className={cn(
+                            "h-8 transition-colors",
+                            formData.location ? "border-green-500/30 text-green-400 hover:bg-green-500/20" : "border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
+                        )}
+                        onClick={handleGetLocation}
+                        disabled={locating}
+                    >
+                        {locating ? <Loader2 className="animate-spin" size={14}/> : <MapPin size={14}/>}
+                        <span className="ml-1 text-xs">{t.reporting.getLocation}</span>
+                    </Button>
+                </div>
+            </div>
+
+            {/* 2. 受損項目 (必填) */}
+            <div className="space-y-1">
+                <label className="text-xs text-zinc-400 block flex justify-between">
+                    {t.reporting.damageItem}
+                    <span className="text-red-500">*</span>
+                </label>
+                <select 
+                    className="w-full bg-zinc-900/80 border border-white/10 rounded px-2 py-1.5 text-zinc-200 outline-none focus:border-blue-500/50"
+                    value={formData.damageItem}
+                    onChange={(e) => setFormData({...formData, damageItem: e.target.value})}
+                >
+                    <option value="residential">{t.reporting.damageOptions.residential}</option>
+                    <option value="public">{t.reporting.damageOptions.public}</option>
+                    <option value="terrain">{t.reporting.damageOptions.terrain}</option>
+                    <option value="coast">{t.reporting.damageOptions.coast}</option>
+                    <option value="road">{t.reporting.damageOptions.road}</option>
+                    <option value="transport">{t.reporting.damageOptions.transport}</option>
+                </select>
+            </div>
+
+            {/* 3. 災害類型 (必填) */}
+            <div className="space-y-1">
+                <label className="text-xs text-zinc-400 block flex justify-between">
+                    {t.reporting.disasterType}
+                    <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-4 pt-1">
+                    {['fire', 'flood', 'other'].map((type) => (
+                        <label key={type} className="flex items-center gap-2 cursor-pointer group">
+                            <input 
+                                type="radio" 
+                                name="disasterType"
+                                value={type}
+                                checked={formData.disasterType === type}
+                                onChange={(e) => setFormData({...formData, disasterType: e.target.value})}
+                                className="accent-blue-500"
+                            />
+                            <span className={cn(
+                                "text-xs group-hover:text-white transition-colors",
+                                formData.disasterType === type ? "text-blue-400 font-bold" : "text-zinc-400"
+                            )}>{(t.reporting.disasterOptions as any)[type]}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            {/* 4. 補充說明 */}
+            <div className="space-y-1">
+                <label className="text-xs text-zinc-400 block">{t.reporting.desc}</label>
+                <textarea 
+                    className="w-full bg-zinc-900/80 border border-white/10 rounded px-2 py-1.5 text-zinc-200 outline-none focus:border-blue-500/50 h-16 resize-none"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                />
+            </div>
+
+            {/* 5. 物資需求 */}
+            <div className="space-y-1">
+                <label className="text-xs text-zinc-400 block">{t.reporting.needs}</label>
+                <input 
+                    className="w-full bg-zinc-900/80 border border-white/10 rounded px-2 py-1.5 text-zinc-200 outline-none focus:border-blue-500/50"
+                    value={formData.needs}
+                    onChange={(e) => setFormData({...formData, needs: e.target.value})}
+                />
+            </div>
+
+            {error && (
+                <div className="text-xs text-red-400 font-bold flex items-center justify-center gap-2 animate-pulse">
+                    <AlertTriangle size={12}/> {error}
+                </div>
+            )}
+
+            <Button 
+                className="w-full bg-yellow-600 hover:bg-yellow-500 text-white mt-2"
+                onClick={handleSubmit}
+            >
+                {t.reporting.submit}
+            </Button>
+        </div>
+    );
+}
+
 interface CommandPanelProps {
   messages: Message[];
   isAnalyzing: boolean;
   onUpload: (file: File) => void;
   onClear: () => void;
   onSendMessage: (text: string) => void;
+  onChoiceSelect: (choice: 'report' | 'consult') => void;
+  onFormSubmit: (data: ReportingFormData) => void;
   isMinimized: boolean;
   onToggleMinimize: () => void;
 }
@@ -127,6 +289,8 @@ export default function CommandPanel({
   onUpload, 
   onClear, 
   onSendMessage,
+  onChoiceSelect,
+  onFormSubmit,
   isMinimized,
   onToggleMinimize 
 }: CommandPanelProps) {
@@ -140,15 +304,15 @@ export default function CommandPanel({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   
-  const { t } = useLanguage();
+  const { t: rawT } = useLanguage();
+  const t = rawT as any;
 
-  // 改用 t.suggested 讀取翻譯，(t as any) 用來繞過尚未更新的型別檢查
   const SUGGESTED_QUERIES = [
-    { label: (t as any).suggested.cprLabel, value: (t as any).suggested.cprValue },
-    { label: (t as any).suggested.fireLabel, value: (t as any).suggested.fireValue },
-    { label: (t as any).suggested.quakeLabel, value: (t as any).suggested.quakeValue },
-    { label: (t as any).suggested.floodLabel, value: (t as any).suggested.floodValue },
-    { label: (t as any).suggested.kitLabel, value: (t as any).suggested.kitValue },
+    { label: t.suggested.cprLabel, value: t.suggested.cprValue },
+    { label: t.suggested.fireLabel, value: t.suggested.fireValue },
+    { label: t.suggested.quakeLabel, value: t.suggested.quakeValue },
+    { label: t.suggested.floodLabel, value: t.suggested.floodValue },
+    { label: t.suggested.kitLabel, value: t.suggested.kitValue },
   ];
 
   useEffect(() => {
@@ -174,6 +338,8 @@ export default function CommandPanel({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       onUpload(e.target.files[0]);
+      // [修正] 重置 input 值，解決無法重複上傳同一張照片的問題
+      e.target.value = '';
     }
   };
 
@@ -217,7 +383,6 @@ export default function CommandPanel({
         
         <div className="flex items-center gap-2">
           
-          {/* 字體調整區 */}
           <div 
             className="flex items-center bg-white/5 rounded-lg border border-white/5 p-0.5"
             onClick={(e) => e.stopPropagation()} 
@@ -249,7 +414,6 @@ export default function CommandPanel({
 
           <div className="w-px h-3 bg-white/20 mx-1" />
 
-          {/* 功能按鈕區 */}
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -333,6 +497,39 @@ export default function CommandPanel({
                   )}
                   
                   <MarkdownRenderer content={msg.content} fontSizeClass={FONT_SIZES[fontLevel]} />
+                  
+                  {/* 互動選擇按鈕 */}
+                  {msg.interactive === 'choice' && (
+                    <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-white/10">
+                        <Button 
+                            className="bg-red-900/40 border border-red-500/50 hover:bg-red-800/50 text-red-200 justify-start"
+                            onClick={() => onChoiceSelect('report')}
+                        >
+                            <ClipboardList className="mr-2 h-4 w-4" />
+                            {t.reporting.btnReport}
+                        </Button>
+                        <Button 
+                            className="bg-blue-900/40 border border-blue-500/50 hover:bg-blue-800/50 text-blue-200 justify-start"
+                            onClick={() => onChoiceSelect('consult')}
+                        >
+                            <Stethoscope className="mr-2 h-4 w-4" />
+                            {t.reporting.btnConsult}
+                        </Button>
+                    </div>
+                  )}
+
+                  {/* 表單 */}
+                  {msg.interactive === 'form' && (
+                    <ReportingForm onSubmit={onFormSubmit} t={t} />
+                  )}
+
+                  {/* 表單提交成功 */}
+                  {msg.interactive === 'form_submitted' && (
+                    <div className="mt-2 p-2 bg-green-900/20 border border-green-500/30 rounded text-green-300 text-sm flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        {t.reporting.submitted}
+                    </div>
+                  )}
                   
                   {msg.analysis && (
                     <div className="mt-4 pt-3 border-t border-white/10 space-y-3">

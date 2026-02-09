@@ -18,7 +18,6 @@ export const translations = {
         supply: "物資補給 (Supply)",
         heavy: "重型機具 (Heavy)"
     },
-    // 圖表事件翻譯
     chart: {
         patrol: "例行巡邏",
         vibration: "輕微震動",
@@ -41,7 +40,6 @@ export const translations = {
         clearHistory: "清除對話紀錄",
         historyCleared: "紀錄已清除"
     },
-    // 建議提問翻譯
     suggested: {
         cprLabel: "🚑 CPR 急救教學",
         cprValue: "請教我 CPR 心肺復甦術的步驟",
@@ -53,6 +51,37 @@ export const translations = {
         floodValue: "淹水時的緊急應變措施",
         kitLabel: "🎒 避難包清單",
         kitValue: "緊急避難包裡面要放什麼？"
+    },
+    reporting: {
+        choiceTitle: "系統已接收影像。請選擇操作：",
+        btnReport: "📢 即時災情回報",
+        btnConsult: "🤖 應變建議諮詢",
+        formTitle: "災情通報單",
+        location: "地理位置",
+        getLocation: "取得現在位置",
+        locating: "定位中...",
+        damageItem: "受損項目",
+        damageOptions: {
+            residential: "住宅",
+            public: "公共建物",
+            terrain: "地形 (土石流/崩塌)",
+            coast: "海岸或河口",
+            road: "道路",
+            transport: "交通運輸設施"
+        },
+        disasterType: "災害類型",
+        disasterOptions: {
+            fire: "火災",
+            flood: "水災",
+            other: "其他現象"
+        },
+        desc: "補充說明 (Optional)",
+        needs: "物資或支援需求 (Optional)",
+        submit: "提交回報",
+        submitted: "✅ 災情已登錄至 Mycelium 網絡",
+        // [新增] 錯誤提示與AI回應
+        errorLocation: "⚠️ 請點擊「取得現在位置」以填入座標",
+        aiFollowUp: "收到，已將您的回報資訊登錄至指揮中心。\n\n**請問您目前是否還需要其他緊急協助？** (例如：急救指南、避難所位置)"
     },
     map: {
         offline: "離線地圖模式"
@@ -86,7 +115,6 @@ export const translations = {
         supply: "Supply Units",
         heavy: "Heavy Machinery"
     },
-    // Chart events
     chart: {
         patrol: "Routine Patrol",
         vibration: "Minor Vibrations",
@@ -109,7 +137,6 @@ export const translations = {
         clearHistory: "Clear History",
         historyCleared: "History Cleared"
     },
-    // Suggested queries translation
     suggested: {
         cprLabel: "🚑 CPR Guide",
         cprValue: "How to perform CPR step-by-step?",
@@ -121,6 +148,37 @@ export const translations = {
         floodValue: "Emergency measures for flooding",
         kitLabel: "🎒 Emergency Kit",
         kitValue: "What should be in an emergency kit?"
+    },
+    reporting: {
+        choiceTitle: "Image received. Please select action:",
+        btnReport: "📢 Real-time Reporting",
+        btnConsult: "🤖 Response Consultation",
+        formTitle: "Disaster Report Form",
+        location: "Location",
+        getLocation: "Get Current GPS",
+        locating: "Locating...",
+        damageItem: "Damage Item",
+        damageOptions: {
+            residential: "Residential",
+            public: "Public Building",
+            terrain: "Terrain/Landslide",
+            coast: "Coast/Estuary",
+            road: "Road",
+            transport: "Transport Facility"
+        },
+        disasterType: "Disaster Type",
+        disasterOptions: {
+            fire: "Fire",
+            flood: "Flood",
+            other: "Other"
+        },
+        desc: "Description (Optional)",
+        needs: "Supplies/Support Needs (Optional)",
+        submit: "Submit Report",
+        submitted: "✅ Report Logged to Mycelium Network",
+        // [New]
+        errorLocation: "⚠️ Please click 'Get Current GPS' to set location",
+        aiFollowUp: "Received. Your report has been logged to the Command Center.\n\n**Do you need any further assistance?** (e.g., First Aid Guide, Shelter Locations)"
     },
     map: {
         offline: "OFFLINE MAP"
