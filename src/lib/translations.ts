@@ -18,7 +18,17 @@ export const translations = {
         supply: "物資補給 (Supply)",
         heavy: "重型機具 (Heavy)"
     },
-    // [新增] 氣象卡片翻譯
+    // 警報翻譯
+    alerts: {
+      typhoonTitle: "海上陸上颱風警報",
+      typhoonMsg: "強烈颱風接近中。預計 2 小時後進入暴風圈，請立即做好防颱準備。",
+      quakeTitle: "地震速報",
+      quakeMsg: "偵測到區域性顯著有感地震。預估震度 5 弱。請立即趴下、掩護、穩住。",
+      airRaidTitle: "防空警報 (萬安演習)",
+      airRaidMsg: "飛彈空襲警報。請所有人員立即進入避難所掩蔽。非演習。",
+      dismiss: "確認收到"
+    },
+    // 氣象卡片翻譯
     weather: {
         title: "即時氣象監測",
         temp: "氣溫",
@@ -129,7 +139,17 @@ export const translations = {
         supply: "Supply Units",
         heavy: "Heavy Machinery"
     },
-    // [New] Weather translations
+    // Alert translations
+    alerts: {
+      typhoonTitle: "Typhoon Warning",
+      typhoonMsg: "Severe Typhoon Approaching. Expected impact in 2 hours. Initiate protocol.",
+      quakeTitle: "Earthquake Early Warning",
+      quakeMsg: "Significant seismic activity detected. Est. Intensity 5. DROP, COVER, HOLD ON.",
+      airRaidTitle: "Air Raid Siren",
+      airRaidMsg: "Incoming Missile Threat Detected. Seek immediate shelter. THIS IS NOT A DRILL.",
+      dismiss: "Acknowledge"
+    },
+    // Weather translations
     weather: {
         title: "REAL-TIME WEATHER",
         temp: "Temp",

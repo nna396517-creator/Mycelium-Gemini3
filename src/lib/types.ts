@@ -51,6 +51,20 @@ export interface ReportingFormData {
   needs?: string;
 }
 
+// 緊急警報類型
+export type AlertType = 'TYPHOON' | 'EARTHQUAKE' | 'AIR_RAID' | 'MISSILE';
+
+export interface EmergencyAlert {
+  id: string;
+  type: AlertType;
+  level: 'WARNING' | 'EMERGENCY'; // 警報等級
+  title: string;
+  titleZh: string;
+  message: string;
+  messageZh: string;
+  timestamp: string;
+}
+
 // 聊天視窗用的訊息格式
 export interface Message {
   id: string;

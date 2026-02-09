@@ -12,13 +12,14 @@ interface WeatherCardProps {
 }
 
 export default function WeatherCard({ scenario }: WeatherCardProps) {
-  const { t: rawT } = useLanguage();
+  const { t: rawT, language } = useLanguage(); // 解構出 language
   const t = rawT as any;
   
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState<Date | null>(null); // 避免 Hydration Mismatch，先設為 null
 
   // 時鐘跳動
   useEffect(() => {
+    setTime(new Date()); // Client-side 渲染後才設定時間
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -54,7 +55,7 @@ export default function WeatherCard({ scenario }: WeatherCardProps) {
     }
 
     // 水災劇本：低溫、極高濕度、豪雨
-    if (riskFactors.structuralDamage < 50 && riskFactors.humanDanger > 80) { // 假設這是水災特徵
+    if (riskFactors.structuralDamage < 50 && riskFactors.humanDanger > 80) { 
        return {
         temp: 22,
         humidity: 99,
@@ -79,6 +80,9 @@ export default function WeatherCard({ scenario }: WeatherCardProps) {
   };
 
   const weather = getWeather();
+  const locale = language === 'zh' ? 'zh-TW' : 'en-US'; // [修正] 定義 locale
+
+  if (!time) return null; // 避免 server/client 時間不一致
 
   return (
     <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 transition-all duration-500 hover:border-blue-500/30 group">
@@ -95,10 +99,12 @@ export default function WeatherCard({ scenario }: WeatherCardProps) {
         </div>
         <div className="text-right">
             <div className="text-lg font-mono font-bold text-white leading-none">
-                {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {/* [修正] 使用 locale 格式化時間 */}
+                {time.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })}
             </div>
             <div className="text-[10px] text-zinc-600 font-mono">
-                {time.toLocaleDateString()}
+                {/* [修正] 使用 locale 格式化日期 */}
+                {time.toLocaleDateString(locale, { weekday: 'short', month: 'numeric', day: 'numeric' })}
             </div>
         </div>
       </div>

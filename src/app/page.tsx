@@ -5,8 +5,9 @@ import { useState, useEffect } from 'react';
 import MapCanvas from '@/components/MapCanvas';
 import CommandPanel from '@/components/CommandPanel';
 import AuthOverlay from '@/components/AuthOverlay';
-import WeatherCard from '@/components/WeatherCard'; // [新增]
-import { AnalysisResult, Message, ReportingFormData } from '@/lib/types';
+import WeatherCard from '@/components/WeatherCard';
+import AlertBanner from '@/components/AlertBanner'; 
+import { AnalysisResult, Message, ReportingFormData, EmergencyAlert } from '@/lib/types';
 import { SCENARIO_DATABASE, DEFAULT_SCENARIO } from '@/data/demoScenarios';
 import { Activity, Signal, Battery, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
@@ -20,6 +21,40 @@ interface RiskDataPoint {
   reason: string;
 }
 
+// 模擬警報資料庫
+const MOCK_ALERTS: EmergencyAlert[] = [
+  {
+    id: 'a1',
+    type: 'AIR_RAID',
+    level: 'EMERGENCY',
+    title: 'AIR RAID SIREN',
+    titleZh: '防空警報 (萬安演習)',
+    message: 'Incoming Missile Threat Detected. Seek immediate shelter. THIS IS NOT A DRILL.',
+    messageZh: '飛彈空襲警報。請所有人員立即進入避難所掩蔽。非演習。',
+    timestamp: new Date().toISOString()
+  },
+  {
+    id: 'a2',
+    type: 'EARTHQUAKE',
+    level: 'EMERGENCY',
+    title: 'EARTHQUAKE WARNING',
+    titleZh: '地震速報',
+    message: 'Significant seismic activity detected. Est. Intensity 5. DROP, COVER, HOLD ON.',
+    messageZh: '偵測到區域性顯著有感地震。預估震度 5 弱。請立即趴下、掩護、穩住。',
+    timestamp: new Date().toISOString()
+  },
+  {
+    id: 'a3',
+    type: 'TYPHOON',
+    level: 'WARNING',
+    title: 'TYPHOON WARNING',
+    titleZh: '海上陸上颱風警報',
+    message: 'Severe Typhoon Approaching. Expected impact in 2 hours. Initiate protocol.',
+    messageZh: '強烈颱風接近中。預計 2 小時後進入暴風圈，請立即做好防颱準備。',
+    timestamp: new Date().toISOString()
+  }
+];
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentScenario, setCurrentScenario] = useState<AnalysisResult | null>(null);
@@ -27,11 +62,10 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [isRiskDetailsOpen, setIsRiskDetailsOpen] = useState(false);
+  const [activeAlert, setActiveAlert] = useState<EmergencyAlert | null>(null);
   
-  // 暫存上傳的檔案名稱，用於後續分析選擇劇本
   const [pendingFileName, setPendingFileName] = useState<string | null>(null);
 
-  // [修正] 強制轉型 t 為 any
   const { t: rawT, language } = useLanguage(); 
   const t = rawT as any;
 
@@ -62,6 +96,17 @@ export default function Home() {
       });
     }
   }, []);
+
+  // 模擬推播：登入後 8 秒隨機觸發一個警報
+  useEffect(() => {
+    if (isLoggedIn && !activeAlert) {
+      const timer = setTimeout(() => {
+        const randomAlert = MOCK_ALERTS[Math.floor(Math.random() * MOCK_ALERTS.length)];
+        setActiveAlert(randomAlert);
+      }, 8000); 
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn, activeAlert]);
 
   const getAIResponse = (input: string): string => {
     const text = input.toLowerCase();
@@ -145,7 +190,6 @@ export default function Home() {
 
   const handleChoiceSelect = (choice: 'report' | 'consult') => {
       
-      // 1. 自動幫使用者發送一則對應的訊息
       const userText = choice === 'report' ? t.reporting.btnReport : t.reporting.btnConsult;
       const userMsg: Message = {
          id: Date.now().toString(),
@@ -271,6 +315,11 @@ export default function Home() {
         <AuthOverlay onLogin={() => setIsLoggedIn(true)} />
       )}
 
+      {/* 警報橫幅 (在登入後顯示) */}
+      {isLoggedIn && (
+        <AlertBanner alert={activeAlert} onClose={() => setActiveAlert(null)} />
+      )}
+
       {/* 底層：地圖 */}
       <div className="absolute inset-0 z-0">
         <MapCanvas scenario={currentScenario} />
@@ -338,7 +387,6 @@ export default function Home() {
           {/* 右側資源面板 */}
             <div className="hidden md:flex absolute right-4 top-16 w-[300px] z-10 flex-col gap-4 animate-in fade-in slide-in-from-right-10 duration-700">
             
-              {/* [新增] 氣象卡片 */}
               <WeatherCard scenario={currentScenario} />
 
               {/* LOCAL RISK INDEX 卡片 */}
