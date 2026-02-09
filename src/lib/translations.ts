@@ -18,6 +18,21 @@ export const translations = {
         supply: "物資補給 (Supply)",
         heavy: "重型機具 (Heavy)"
     },
+    // [新增] 氣象卡片翻譯
+    weather: {
+        title: "即時氣象監測",
+        temp: "氣溫",
+        humidity: "濕度",
+        wind: "風速",
+        precip: "降雨機率",
+        conditions: {
+            sunny: "烈日 / 高溫",
+            cloudy: "多雲 / 陰",
+            rainy: "豪大雨特報",
+            storm: "雷雨交加",
+            clear: "晴朗"
+        }
+    },
     chart: {
         patrol: "例行巡邏",
         vibration: "輕微震動",
@@ -79,7 +94,6 @@ export const translations = {
         needs: "物資或支援需求 (Optional)",
         submit: "提交回報",
         submitted: "✅ 災情已登錄至 Mycelium 網絡",
-        // [新增] 錯誤提示與AI回應
         errorLocation: "⚠️ 請點擊「取得現在位置」以填入座標",
         aiFollowUp: "收到，已將您的回報資訊登錄至指揮中心。\n\n**請問您目前是否還需要其他緊急協助？** (例如：急救指南、避難所位置)"
     },
@@ -114,6 +128,21 @@ export const translations = {
         medic: "Medical Units",
         supply: "Supply Units",
         heavy: "Heavy Machinery"
+    },
+    // [New] Weather translations
+    weather: {
+        title: "REAL-TIME WEATHER",
+        temp: "Temp",
+        humidity: "Humidity",
+        wind: "Wind",
+        precip: "Precip",
+        conditions: {
+            sunny: "Sunny / High Heat",
+            cloudy: "Cloudy / Overcast",
+            rainy: "Heavy Rain Alert",
+            storm: "Thunderstorm",
+            clear: "Clear Sky"
+        }
     },
     chart: {
         patrol: "Routine Patrol",
@@ -176,7 +205,6 @@ export const translations = {
         needs: "Supplies/Support Needs (Optional)",
         submit: "Submit Report",
         submitted: "✅ Report Logged to Mycelium Network",
-        // [New]
         errorLocation: "⚠️ Please click 'Get Current GPS' to set location",
         aiFollowUp: "Received. Your report has been logged to the Command Center.\n\n**Do you need any further assistance?** (e.g., First Aid Guide, Shelter Locations)"
     },

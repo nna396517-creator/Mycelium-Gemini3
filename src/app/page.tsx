@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import MapCanvas from '@/components/MapCanvas';
 import CommandPanel from '@/components/CommandPanel';
 import AuthOverlay from '@/components/AuthOverlay';
+import WeatherCard from '@/components/WeatherCard'; // [新增]
 import { AnalysisResult, Message, ReportingFormData } from '@/lib/types';
 import { SCENARIO_DATABASE, DEFAULT_SCENARIO } from '@/data/demoScenarios';
 import { Activity, Signal, Battery, Users, ChevronDown, ChevronUp } from 'lucide-react';
@@ -142,7 +143,6 @@ export default function Home() {
     }, 1500);
   };
 
-  // [修正] 處理點擊選擇後的邏輯：先幫使用者發送訊息，再觸發 AI
   const handleChoiceSelect = (choice: 'report' | 'consult') => {
       
       // 1. 自動幫使用者發送一則對應的訊息
@@ -327,8 +327,8 @@ export default function Home() {
                 onUpload={handleUpload} 
                 onClear={handleClearHistory}
                 onSendMessage={handleSendMessage}
-                onChoiceSelect={handleChoiceSelect} // [新增]
-                onFormSubmit={handleFormSubmit}     // [新增]
+                onChoiceSelect={handleChoiceSelect} 
+                onFormSubmit={handleFormSubmit}
                 isMinimized={isPanelMinimized}
                 onToggleMinimize={() => setIsPanelMinimized(!isPanelMinimized)}
               />
@@ -338,6 +338,9 @@ export default function Home() {
           {/* 右側資源面板 */}
             <div className="hidden md:flex absolute right-4 top-16 w-[300px] z-10 flex-col gap-4 animate-in fade-in slide-in-from-right-10 duration-700">
             
+              {/* [新增] 氣象卡片 */}
+              <WeatherCard scenario={currentScenario} />
+
               {/* LOCAL RISK INDEX 卡片 */}
             <div className="p-4 bg-black/80 backdrop-blur-md rounded-xl border border-white/10 transition-all duration-300">
                 <div className="flex items-center justify-between mb-2">
