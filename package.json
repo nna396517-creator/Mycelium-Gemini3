@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "//backend-comment": "--- Backend Scripts ---",
+    "fastapi": "cd backend && python run.py",
+    "//all-comment": "--- Run Both ---",
+    "dev:all": "concurrently \"npm run dev\" \"npm run fastapi\" --names \"NEXT,API\" --prefix-colors \"cyan,magenta\""
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -26,6 +30,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",

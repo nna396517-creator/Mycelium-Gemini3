@@ -7,8 +7,8 @@ import CommandPanel from '@/components/CommandPanel';
 import AuthOverlay from '@/components/AuthOverlay';
 import WeatherCard from '@/components/WeatherCard';
 import AlertBanner from '@/components/AlertBanner'; 
-import MapLegend from '@/components/MapLegend';
-import { AnalysisResult, Message, ReportingFormData, EmergencyAlert } from '@/lib/types';
+import MapLegend from '@/components/MapLegend'; 
+import { AnalysisResult, Message, ReportingFormData, EmergencyAlert, Task } from '@/lib/types'; // 引入 Task
 import { SCENARIO_DATABASE, DEFAULT_SCENARIO } from '@/data/demoScenarios';
 import { Activity, Signal, Battery, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '@/components/LanguageContext';
@@ -84,6 +84,8 @@ export default function Home() {
   const [activeAlert, setActiveAlert] = useState<EmergencyAlert | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   
+  // [新增] 暫存上傳的檔案，等待使用者點選「諮詢」時發送
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [pendingFileName, setPendingFileName] = useState<string | null>(null);
 
   const { t: rawT, language } = useLanguage(); 
@@ -128,7 +130,7 @@ export default function Home() {
         },
         (error) => {
           console.error("Location error", error);
-          setUserLocation({ lat: 25.0330, lng: 121.5654 }); 
+          setUserLocation({ lat: 25.0330, lng: 121.5654 });
         }
       );
     } else {
@@ -208,10 +210,13 @@ export default function Home() {
 
   const getAIResponse = (input: string): string => {
     const text = input.toLowerCase();
+    
+    // ... (保留原本的 CPR/滅火/地震 邏輯) ...
     if (text.includes("cpr") || text.includes("心肺復甦")) {
       if (text.includes("how") || text.includes("step")) return "**🚑 CPR Steps:**\n\n1. **Check Safety**: Ensure environment is safe.\n2. **Check Responsiveness**: Tap shoulders and shout.\n3. **Call 911**: Get AED.\n4. **Compressions**: Push hard and fast in center of chest (100-120/min).\n5. **Airway**: Tilt head, lift chin.\n6. **Breaths**: Give 2 rescue breaths.\n\n*Continue until help arrives.*";
       return "**🚑 CPR 急救步驟指南：**\n\n1. **確認環境安全**：確保自己與患者不處於危險中。\n2. **叫**：拍打雙肩，確認患者意識。\n3. **叫**：指定旁人撥打 119 並取得 AED。\n4. **C (Compressions)**：胸外按壓，速率 100-120 下/分，深度 5-6 公分。\n5. **A (Airway)**：暢通呼吸道 (壓額抬下巴)。\n6. **B (Breathing)**：人工呼吸 (若不願意可持續按壓)。\n\n*持續操作直到醫護人員抵達。*";
     }
+    // ... (為節省篇幅，其他關鍵字邏輯保持不變)
     if (text.includes("滅火") || text.includes("火災") || text.includes("fire") || text.includes("extinguisher")) {
         if (text.includes("fire") || text.includes("extinguisher")) return "**🔥 Fire Extinguisher (PASS):**\n\n1. **Pull** the pin.\n2. **Aim** at the base of fire.\n3. **Squeeze** the lever.\n4. **Sweep** side to side.\n\n*Warning: Evacuate if fire is larger than a wastebasket.*";
         return "**🔥 滅火器操作口訣 (拉、瞄、壓、掃)：**\n\n1. **拉**：拉開安全插梢。\n2. **瞄**：握住噴管，瞄準火源底部。\n3. **壓**：用力壓下握把。\n4. **掃**：向火源底部左右掃射。\n\n*注意：若火勢超過腰部高度，請立即放棄滅火並逃生。*";
@@ -228,10 +233,12 @@ export default function Home() {
         if (text.includes("kit") || text.includes("supplies")) return "**🎒 Emergency Kit Checklist:**\n\n1. **Water & Food**: 3-day supply (non-perishable).\n2. **First Aid**: Bandages, antiseptics, meds.\n3. **Tools**: Flashlight (extra batteries), whistle, multi-tool.\n4. **Documents**: ID copies, cash, map.\n5. **Warmth**: Blanket, rain poncho.";
         return "**🎒 緊急避難包建議清單：**\n\n1. **水與食物**：每人 3 公升水、能量棒、罐頭。\n2. **保暖與衣物**：輕便雨衣、暖暖包、替換衣物。\n3. **醫療用品**：急救箱、個人藥品。\n4. **工具**：手電筒 (含電池)、哨子、瑞士刀、行動電源。\n5. **證件**：身分證影本、現金。";
     }
+
     return `Command received: "${input}"\nSystem is updating parameters based on your input. Monitoring active sectors.`;
   };
 
   const selectScenario = (fileName: string): AnalysisResult | null => {
+    // 雖然我們有後端，但這個函式可以用來當作 "後端失敗時的最後防線"
     const name = fileName.toLowerCase();
     if (name.includes('fire')) return SCENARIO_DATABASE['fire'];
     if (name.includes('crack')) return SCENARIO_DATABASE['crack']; 
@@ -244,6 +251,9 @@ export default function Home() {
 
   const handleUpload = async (file: File) => {
     setPendingFileName(file.name);
+    // [修改] 將檔案存入 State，稍後呼叫 API 用
+    setUploadFile(file);
+
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -253,6 +263,8 @@ export default function Home() {
     setMessages(prev => [...prev, userMsg]);
     setIsAnalyzing(true);
     setIsPanelMinimized(false);
+
+    // 模擬分析等待感 (UI 效果)
     setTimeout(() => {
         setIsAnalyzing(false);
         const choiceMsg: Message = {
@@ -262,10 +274,11 @@ export default function Home() {
             interactive: 'choice'
         };
         setMessages(prev => [...prev, choiceMsg]);
-    }, 1500);
+    }, 1000);
   };
 
-  const handleChoiceSelect = (choice: 'report' | 'consult') => {
+  const handleChoiceSelect = async (choice: 'report' | 'consult') => {
+      
       const userText = choice === 'report' ? t.reporting.btnReport : t.reporting.btnConsult;
       const userMsg: Message = {
          id: Date.now().toString(),
@@ -276,45 +289,99 @@ export default function Home() {
 
       if (choice === 'consult') {
           setIsAnalyzing(true);
-          setTimeout(() => {
-              setIsAnalyzing(false);
-              const matchedScenario = pendingFileName ? selectScenario(pendingFileName) : null;
-              if (matchedScenario) {
-                setCurrentScenario(matchedScenario);
-                let newScore = 50;
-                if (matchedScenario.riskLevel === 'CRITICAL') newScore = 95;
-                else if (matchedScenario.riskLevel === 'HIGH') newScore = 85;
-                else if (matchedScenario.riskLevel === 'MODERATE') newScore = 60;
-                setRiskHistory(prev => {
-                  const newPoint: RiskDataPoint = {
-                      score: newScore, 
-                      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                      reason: matchedScenario.riskLevel.toLowerCase()
-                  };
-                  const newHistory = [...prev, newPoint];
-                  return newHistory.slice(-10);
+          
+          try {
+            // [新增] 真實呼叫後端 API
+            let backendData = null;
+            
+            if (uploadFile) {
+                const formData = new FormData();
+                formData.append('image', uploadFile);
+                formData.append('audio_transcript', 'Analysis requested.'); // 之後可接語音
+
+                const res = await fetch('http://localhost:8000/api/analyze', {
+                    method: 'POST',
+                    body: formData,
                 });
-                const summary = language === 'zh' ? matchedScenario.situationSummaryZh : matchedScenario.situationSummary;
+
+                if (res.ok) {
+                    backendData = await res.json();
+                    console.log("Backend Response:", backendData);
+                }
+            }
+
+            // 處理後端回傳的資料
+            if (backendData) {
+                // 將後端 DisasterResponse 轉換為前端的 AnalysisResult 格式
+                const ai = backendData.ai_analysis;
+                const riskScore = ai.severity_score * 10; // 轉為 0-100
+
+                // 處理 Map Updates (轉換為 Tasks)
+                const newTasks: Task[] = backendData.map_updates.map((update: any, idx: number) => ({
+                    id: `task-${Date.now()}-${idx}`,
+                    role: update.role.includes("Hazmat") ? "RESCUER" : "MEDIC",
+                    description: `${update.action.toUpperCase()}: ${update.name} (${update.status})`,
+                    priority: "HIGH",
+                    status: update.status === "active" ? "active" : "pending",
+                    coordinates: update.target_location || update.current_location // 優先顯示目標點
+                }));
+
+                const apiScenario: AnalysisResult = {
+                    riskLevel: ai.severity_score > 7 ? 'CRITICAL' : 'HIGH',
+                    confidence: 0.95,
+                    timestamp: backendData.timestamp,
+                    location: { lat: 25.033964, lng: 121.564468 }, // 使用後端回傳或預設
+                    situationSummary: ai.risk_assessment,
+                    situationSummaryZh: `**嚴重程度評分: ${ai.severity_score}/10**\n\n${ai.reasoning_log}\n\n**行動計畫:**\n${ai.action_plan}`,
+                    riskFactors: {
+                        structuralDamage: riskScore,
+                        fireHazard: riskScore > 80 ? 90 : 30,
+                        humanDanger: riskScore
+                    },
+                    suggestedTasks: newTasks
+                };
+
+                // 更新狀態
+                setCurrentScenario(apiScenario);
+                setIsAnalyzing(false);
+
+                // 更新圖表
+                setRiskHistory(prev => {
+                    const newPoint: RiskDataPoint = {
+                        score: riskScore, 
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        reason: "critical"
+                    };
+                    return [...prev, newPoint].slice(-10);
+                });
+
+                // 顯示 AI 訊息
+                const summary = language === 'zh' 
+                  ? apiScenario.situationSummaryZh 
+                  : `**Severity: ${ai.severity_score}/10**\n\n${ai.risk_assessment}\n\n**Plan:** ${ai.action_plan}`;
+
                 const aiMsg: Message = {
                   id: Date.now().toString(),
                   role: 'assistant',
                   content: summary, 
-                  analysis: matchedScenario
+                  analysis: apiScenario
                 };
                 setMessages(prev => [...prev, aiMsg]);
-              } else {
-                const warning = language === 'zh'
-                  ? "⚠️ **影像關聯性警示**\n\n分析顯示此影像未包含可識別的災害特徵（火災、淹水、倒塌）。\n\n系統維持 **待命 (STANDBY)** 狀態。"
-                  : "⚠️ **Image Relevance Alert**\n\nAnalysis indicates this image does not contain recognizable disaster patterns (Fire, Flood, Collapse).\n\nSystem maintains **STANDBY** status.";
-                const aiMsg: Message = {
-                  id: Date.now().toString(),
-                  role: 'assistant',
-                  content: warning
-                };
-                setMessages(prev => [...prev, aiMsg]);
-              }
-          }, 1500);
+
+            } else {
+                // 如果 API 失敗，回退到 Mock 邏輯 (Fail-over)
+                console.warn("API failed, falling back to mock data");
+                fallbackToMockScenario();
+            }
+
+          } catch (e) {
+              console.error("API Error", e);
+              setIsAnalyzing(false);
+              fallbackToMockScenario();
+          }
+
       } else {
+          // Report Form 模式
           const formMsg: Message = {
               id: Date.now().toString(),
               role: 'assistant',
@@ -325,12 +392,64 @@ export default function Home() {
       }
   };
 
+  // 抽離出的 Mock 備案邏輯
+  const fallbackToMockScenario = () => {
+      setTimeout(() => {
+          setIsAnalyzing(false);
+          const matchedScenario = pendingFileName ? selectScenario(pendingFileName) : null;
+
+          if (matchedScenario) {
+            setCurrentScenario(matchedScenario);
+            
+            let newScore = 50;
+            if (matchedScenario.riskLevel === 'CRITICAL') newScore = 95;
+            else if (matchedScenario.riskLevel === 'HIGH') newScore = 85;
+            else if (matchedScenario.riskLevel === 'MODERATE') newScore = 60;
+
+            setRiskHistory(prev => {
+              const newPoint: RiskDataPoint = {
+                  score: newScore, 
+                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  reason: matchedScenario.riskLevel.toLowerCase()
+              };
+              const newHistory = [...prev, newPoint];
+              return newHistory.slice(-10);
+            });
+
+            const summary = language === 'zh' 
+              ? matchedScenario.situationSummaryZh 
+              : matchedScenario.situationSummary;
+
+            const aiMsg: Message = {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: summary, 
+              analysis: matchedScenario
+            };
+            setMessages(prev => [...prev, aiMsg]);
+          
+          } else {
+            const warning = language === 'zh'
+              ? "⚠️ **影像關聯性警示**\n\n分析顯示此影像未包含可識別的災害特徵（火災、淹水、倒塌）。\n\n系統維持 **待命 (STANDBY)** 狀態。"
+              : "⚠️ **Image Relevance Alert**\n\nAnalysis indicates this image does not contain recognizable disaster patterns (Fire, Flood, Collapse).\n\nSystem maintains **STANDBY** status.";
+
+            const aiMsg: Message = {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: warning
+            };
+            setMessages(prev => [...prev, aiMsg]);
+          }
+      }, 1000);
+  };
+
   const handleFormSubmit = (data: ReportingFormData) => {
       setMessages(prev => prev.map(msg => 
           msg.interactive === 'form' 
             ? { ...msg, interactive: 'form_submitted' as any, formData: data }
             : msg
       ));
+
       setTimeout(() => {
           const successMsg: Message = {
               id: Date.now().toString(),
@@ -349,10 +468,13 @@ export default function Home() {
     };
     setMessages(prev => [...prev, userMsg]);
     setIsPanelMinimized(false);
+
     setIsAnalyzing(true);
     setTimeout(() => {
       setIsAnalyzing(false);
+      
       const responseText = getAIResponse(text);
+      
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -362,8 +484,13 @@ export default function Home() {
     }, 1500);
   };
 
-  const handleLogout = () => setIsLoggedIn(false);
-  const handleClearHistory = () => setMessages([]);
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
+
+  const handleClearHistory = () => {
+    setMessages([]);
+  };
 
   return (
     <main className="relative w-full h-[100dvh] overflow-hidden bg-zinc-950 text-white font-mono selection:bg-blue-500/30">
@@ -413,7 +540,7 @@ export default function Home() {
           {/* 左側面板容器 */}
           <div 
             className={cn(
-              "fixed z-30 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] flex flex-col pointer-events-none", // 加入 pointer-events-none 避免空白區域擋到地圖
+              "fixed z-30 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] flex flex-col pointer-events-none", 
               // Mobile
               "left-0 bottom-0 w-full",
               // Desktop
@@ -427,11 +554,11 @@ export default function Home() {
 
             {/* 聊天面板容器 */}
             <div className={cn(
-                "w-full transition-all duration-500 ease-in-out pointer-events-auto", // 恢復點擊事件
+                "w-full transition-all duration-500 ease-in-out pointer-events-auto", 
                 // Mobile Height
                 isPanelMinimized ? "h-[60px]" : "h-[45dvh]",
                 // Desktop Height
-                isPanelMinimized ? "md:h-[60px]" : "md:h-[70vh]"
+                isPanelMinimized ? "md:h-[70px]" : "md:h-[70vh]"
             )}>
               <CommandPanel 
                 messages={messages} 
