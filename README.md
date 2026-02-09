@@ -1,32 +1,34 @@
 # Mycelium-Gemini3
-A decentralized disaster resilience network powered by Gemini 3
+A decentralized disaster resilience network powered by Gemini 3.
 
 ---
 
 ## 🌟 Key Features
 
-### 1. 🧠 Multimodal AI Analysis (Gemini 3)
-Instead of simple text reports, Mycelium analyzes **raw imagery** from the disaster scene.
-* **Visual Reasoning**: Identifies structural damage, fire hazards, and trapped survivors from uploaded photos.
-* **Task Distribution**: Automatically generates prioritized missions (Medic, Rescue, Supply) based on risk levels.
+### 1. 🧠 Multimodal AI Analysis & Triage
+Mycelium goes beyond simple text reports by analyzing **raw imagery** from disaster scenes.
+* **Scenario Recognition**: Automatically detects disaster types (Fire, Flood, Earthquake) based on visual input.
+* **Task Distribution**: Generates prioritized missions (Medic, Rescue, Supply) with coordinate-based deployment on the tactical map.
 
-### 2. 🛡️ Resilient Offline Mapping
-Designed for connectivity-loss scenarios.
-* **Google Maps Integration**: Full interactive map when online.
-* **Fallback Grid System**: Automatically switches to a **"Dev Mock Mode"** (Offline Grid) when map services are unreachable or API quotas are exceeded, ensuring the command center never goes blind.
+### 2. 🔄 Interactive Command Workflow (New!)
+A structured decision-making flow designed for clarity under pressure.
+* **Intent Separation**: Upon image upload, commanders choose between **"Real-time Reporting"** (Structured Data) or **"Response Consultation"** (AI Advice).
+* **Smart Forms**: Integrated disaster reporting form with **one-click GPS location**, required field validation, and resource request logging.
 
-### 3. 🖥️ Tactical HUD Interface
+### 3. 🌤️ Dynamic Environmental Monitoring (New!)
+* **Context-Aware Weather**: The dashboard features a real-time **Weather Widget** that adapts to the active scenario.
+    * *Fire Scenario*: Displays high heat, low humidity, and strong winds.
+    * *Flood Scenario*: Displays heavy precipitation and storm warnings.
+    * *Standby*: Displays current local weather conditions.
+
+### 4. 🖥️ Tactical HUD Interface
 A "Situation Room" grade dashboard designed for high-stress environments.
-* **Real-time Monitoring**: Visualizes local risk indices, available resources, and system latency.
-* **Dark Mode Optimization**: Reduces eye strain for operators working in low-light environments.
+* **Real-time Monitoring**: Visualizes Local Risk Indices, Resource Availability, and Network Latency.
+* **Resilient Mapping**: seamlessly switches between **Google Maps** (Online) and **Tactical Grid Mode** (Offline/Mock) to ensure operational continuity.
 
-### 4. 🌍 Global Readiness (i18n)
-* **Bilingual Support**: Instant toggle between **English** and **Traditional Chinese**.
+### 5. 🌍 Global Readiness (i18n)
+* **Full Bilingual Support**: Instant toggle between **English** and **Traditional Chinese**, covering all UI elements, AI responses, and reporting forms.
 * Built for international cooperation in global disaster relief scenarios.
-
-### 5. 🔐 Secure Node Access
-* **Simulated Biometric Auth**: A specialized login overlay simulating secure terminal access.
-* **Role-Based Access**: Commander verification flow (Demo Credential: `admin`).
 
 ---
 
@@ -43,21 +45,34 @@ A "Situation Room" grade dashboard designed for high-stress environments.
 
 ## 🎮 Demo Instructions (Mock Mode)
 
-Even without API keys, you can explore the UI flow:
-1.  **Login**: Enter `admin` in the ID field and click **Connect**.
-2.  **Toggle Language**: Use the switch in the top-right corner.
-3.  **Simulate Analysis**:
-    * Click the **Upload (Clip)** icon in the chat bar.
-    * Select any image.
-    * Watch the **Gemini 3 Reasoning** animation.
-    * Observe the **Tactical Map** update with rescue nodes.
+To experience the full range of scenarios, follow these steps:
+
+### 1. Access & Login
+* Enter `admin` in the Commander ID field.
+* Click **Connect** to access the dashboard.
+
+### 2. Trigger Disaster Scenarios
+The system uses **filename detection** to simulate specific AI analysis results. Upload images with these keywords in their filename:
+
+* 🔥 **Fire Scenario**: Upload an image named like `factory_fire.jpg`.
+    * *Result*: Triggers high heat weather, fire hazard alerts, and burn unit tasks.
+* 🌊 **Flood Scenario**: Upload an image named like `street_flood.jpg`.
+    * *Result*: Triggers heavy rain weather, drowning risk alerts, and boat rescue tasks.
+* 🏚️ **Earthquake Scenario**: Upload an image named like `building_collapse.jpg`.
+    * *Result*: Triggers structural damage alerts, debris removal tasks, and heavy machinery requests.
+
+### 3. Try the Interactive Flow
+1.  **Upload** one of the images above.
+2.  **Select Action**:
+    * Click **📢 Real-time Reporting** to test the form validation and GPS feature.
+    * Click **🤖 Response Consultation** to see the AI generate a bilingual situation summary and mission tasks.
 
 ---
 
 ## 🤝 Team
-* **Frontend & UI/UX**: Dashboard design, interactive map, i18n system.
-* **AI Engineer**: Gemini API integration, prompt engineering.
-* **PM**: Scenario design, disaster response logic.
+* **Frontend & UI/UX**: Dashboard architecture, interactive map, i18n system.
+* **AI Engineer**: Gemini API integration, prompt engineering, scenario logic.
+* **PM**: Disaster response protocols, user journey design.
 
 ---
 *Built for the Google DeepMind Gemini 3 Hackathon. 2026.*
