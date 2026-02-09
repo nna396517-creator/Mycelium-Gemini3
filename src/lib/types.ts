@@ -25,9 +25,9 @@ export interface Task {
 
 // 定義三個維度的評分因子
 export interface RiskFactors {
-  structuralDamage: number; // 結構受損度 (0-100)
-  fireHazard: number;       // 火災/爆炸風險 (0-100)
-  humanDanger: number;      // 人員受困危急度 (0-100)
+  structuralDamage: number; 
+  fireHazard: number;       
+  humanDanger: number;      
 }
 
 // Gemini 分析後的完整結果
@@ -36,13 +36,13 @@ export interface AnalysisResult {
   confidence: number;
   timestamp: string;
   location: Location;
-  situationSummary: string;   // 英文版摘要
-  situationSummaryZh: string; // 中文版摘要
+  situationSummary: string;   
+  situationSummaryZh: string; 
   riskFactors: RiskFactors;
   suggestedTasks: Task[];
 }
 
-// [新增] 表單資料結構
+// 表單資料結構
 export interface ReportingFormData {
   location?: { lat: number, lng: number };
   damageItem?: string;
@@ -57,12 +57,15 @@ export type AlertType = 'TYPHOON' | 'EARTHQUAKE' | 'AIR_RAID' | 'MISSILE';
 export interface EmergencyAlert {
   id: string;
   type: AlertType;
-  level: 'WARNING' | 'EMERGENCY'; // 警報等級
+  level: 'WARNING' | 'EMERGENCY';
   title: string;
   titleZh: string;
   message: string;
   messageZh: string;
   timestamp: string;
+  // [新增] 災害地點與影響半徑 (公里)
+  location?: { lat: number, lng: number }; 
+  radiusKm?: number; 
 }
 
 // 聊天視窗用的訊息格式
@@ -70,11 +73,8 @@ export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  attachmentUrl?: string; // 圖片的 URL
-  analysis?: AnalysisResult; // AI 分析結果
-  
-  // [新增] 互動模式屬性
+  attachmentUrl?: string; 
+  analysis?: AnalysisResult; 
   interactive?: 'choice' | 'form' | 'form_submitted'; 
-  // 用於暫存該則訊息的表單狀態 (僅前端顯示用)
   formData?: ReportingFormData;
 }

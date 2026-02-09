@@ -21,37 +21,56 @@ interface RiskDataPoint {
   reason: string;
 }
 
-// 模擬警報資料庫
+// Haversine 公式：計算兩點經緯度之間的距離 (公里)
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // 地球半徑 (km)
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// 帶有座標的模擬警報 (用於測試過濾功能)
 const MOCK_ALERTS: EmergencyAlert[] = [
   {
-    id: 'a1',
+    id: 'mock-air-raid-taipei',
     type: 'AIR_RAID',
     level: 'EMERGENCY',
-    title: 'AIR RAID SIREN',
-    titleZh: '防空警報 (萬安演習)',
-    message: 'Incoming Missile Threat Detected. Seek immediate shelter. THIS IS NOT A DRILL.',
-    messageZh: '飛彈空襲警報。請所有人員立即進入避難所掩蔽。非演習。',
-    timestamp: new Date().toISOString()
+    title: 'AIR RAID SIREN (NORTH)',
+    titleZh: '防空警報 (北部地區)',
+    message: 'Missile threat detected in Northern Taiwan. Seek shelter immediately.',
+    messageZh: '北部空域偵測到飛彈威脅。請立即進入避難所掩蔽。',
+    timestamp: new Date().toISOString(),
+    location: { lat: 25.0330, lng: 121.5654 }, // 台北 101 附近
+    radiusKm: 50 // 影響範圍 50km
   },
   {
-    id: 'a2',
+    id: 'mock-quake-hualien',
     type: 'EARTHQUAKE',
-    level: 'EMERGENCY',
+    level: 'WARNING',
     title: 'EARTHQUAKE WARNING',
-    titleZh: '地震速報',
-    message: 'Significant seismic activity detected. Est. Intensity 5. DROP, COVER, HOLD ON.',
-    messageZh: '偵測到區域性顯著有感地震。預估震度 5 弱。請立即趴下、掩護、穩住。',
-    timestamp: new Date().toISOString()
+    titleZh: '地震速報 (花蓮近海)',
+    message: 'M5.5 Quake detected off the coast of Hualien.',
+    messageZh: '花蓮近海發生規模 5.5 地震。預估震度 4 級。',
+    timestamp: new Date().toISOString(),
+    location: { lat: 23.9872, lng: 121.6011 }, // 花蓮
+    radiusKm: 150 // 地震影響範圍較大
   },
   {
-    id: 'a3',
+    id: 'mock-typhoon-kaohsiung',
     type: 'TYPHOON',
     level: 'WARNING',
-    title: 'TYPHOON WARNING',
-    titleZh: '海上陸上颱風警報',
-    message: 'Severe Typhoon Approaching. Expected impact in 2 hours. Initiate protocol.',
-    messageZh: '強烈颱風接近中。預計 2 小時後進入暴風圈，請立即做好防颱準備。',
-    timestamp: new Date().toISOString()
+    title: 'TYPHOON WARNING (SOUTH)',
+    titleZh: '颱風陸上警報 (南部地區)',
+    message: 'Typhoon eye making landfall near Kaohsiung.',
+    messageZh: '颱風中心預計於高雄登陸，南部地區嚴加戒備。',
+    timestamp: new Date().toISOString(),
+    location: { lat: 22.6273, lng: 120.3014 }, // 高雄
+    radiusKm: 100
   }
 ];
 
@@ -63,6 +82,9 @@ export default function Home() {
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [isRiskDetailsOpen, setIsRiskDetailsOpen] = useState(false);
   const [activeAlert, setActiveAlert] = useState<EmergencyAlert | null>(null);
+  
+  // [新增] 使用者位置狀態
+  const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
   
   const [pendingFileName, setPendingFileName] = useState<string | null>(null);
 
@@ -97,16 +119,107 @@ export default function Home() {
     }
   }, []);
 
-  // 模擬推播：登入後 8 秒隨機觸發一個警報
+  // [新增] 取得使用者位置
+  const getUserLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          console.log("User located:", position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+          console.error("Location access denied, defaulting to Taipei", error);
+          setUserLocation({ lat: 25.0330, lng: 121.5654 }); // 預設台北
+        }
+      );
+    } else {
+      setUserLocation({ lat: 25.0330, lng: 121.5654 });
+    }
+  };
+
+  // [新增] 登入後取得位置
   useEffect(() => {
-    if (isLoggedIn && !activeAlert) {
+    if (isLoggedIn) {
+      getUserLocation();
+    }
+  }, [isLoggedIn]);
+
+  // [修改] 警報抓取與過濾邏輯
+  const fetchAndFilterAlerts = async () => {
+    if (!userLocation) return;
+
+    try {
+      // 1. 抓取 USGS 真實地震
+      const res = await fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson');
+      const data = await res.json();
+      
+      let matchedAlert: EmergencyAlert | null = null;
+
+      // 檢查真實地震是否在附近
+      if (data.features) {
+        for (const quake of data.features) {
+          const [lon, lat] = quake.geometry.coordinates;
+          const mag = quake.properties.mag;
+          const dist = calculateDistance(userLocation.lat, userLocation.lng, lat, lon);
+          
+          // 如果地震發生在 300km 內 (有感範圍)，則顯示
+          if (dist < 300) {
+             const place = quake.properties.place;
+             const time = new Date(quake.properties.time).toLocaleTimeString();
+             matchedAlert = {
+              id: `usgs-${quake.id}`,
+              type: 'EARTHQUAKE',
+              level: mag > 6 ? 'EMERGENCY' : 'WARNING',
+              title: `LIVE EARTHQUAKE (M${mag})`,
+              titleZh: `即時地震速報 (規模 ${mag})`,
+              message: `Detected at ${place} (~${Math.round(dist)}km away). Check safety.`,
+              messageZh: `偵測到有感地震：${place} (距離約 ${Math.round(dist)} 公里)。請注意安全。`,
+              timestamp: new Date().toISOString(),
+              location: { lat, lng: lon },
+              radiusKm: 300
+            };
+            break; // 找到最近的一個就停止
+          }
+        }
+      }
+
+      // 2. 如果沒有真實威脅，則檢查 Mock 資料庫
+      if (!matchedAlert) {
+        for (const alert of MOCK_ALERTS) {
+          if (alert.location && alert.radiusKm) {
+            const dist = calculateDistance(userLocation.lat, userLocation.lng, alert.location.lat, alert.location.lng);
+            if (dist <= alert.radiusKm) {
+              matchedAlert = alert;
+              break;
+            }
+          }
+        }
+      }
+
+      // 設定警報
+      if (matchedAlert) {
+        setActiveAlert(matchedAlert);
+      }
+
+    } catch (e) {
+      console.error("Alert fetch failed", e);
+    }
+  };
+
+  // [修改] 定時檢查警報 (登入且有位置後)
+  useEffect(() => {
+    if (isLoggedIn && userLocation && !activeAlert) {
+      // 延遲 3 秒模擬掃描過程
       const timer = setTimeout(() => {
-        const randomAlert = MOCK_ALERTS[Math.floor(Math.random() * MOCK_ALERTS.length)];
-        setActiveAlert(randomAlert);
-      }, 8000); 
+        fetchAndFilterAlerts();
+      }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [isLoggedIn, activeAlert]);
+  }, [isLoggedIn, userLocation, activeAlert]);
+
 
   const getAIResponse = (input: string): string => {
     const text = input.toLowerCase();
